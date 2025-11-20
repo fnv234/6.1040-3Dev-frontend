@@ -12,23 +12,22 @@
     </div>
 
     <div v-else class="teams-list">
-      <div v-for="team in teams" :key="team.id" class="team-card card">
+      <div v-for="team in teams" :key="team._id" class="team-card card">
         <div class="team-info">
           <h3>{{ team.name }}</h3>
-          <p class="text-secondary">{{ team.memberEmails.length }} members</p>
-          <p class="text-secondary"><small>Created {{ formatDate(team.createdAt) }}</small></p>
+          <p class="text-secondary">{{ team.members.length }} members</p>
         </div>
         <div class="team-members">
-          <h4>Team Members</h4>
+          <h4>Team Members (Employee IDs)</h4>
           <ul class="member-list">
-            <li v-for="(email, idx) in team.memberEmails" :key="idx">
-              {{ email }}
+            <li v-for="(memberId, idx) in team.members" :key="idx">
+              {{ memberId }}
             </li>
           </ul>
         </div>
         <div class="team-actions">
           <button @click="editTeam(team)" class="btn btn-secondary">Edit</button>
-          <button @click="deleteTeam(team.id)" class="btn btn-secondary">Delete</button>
+          <button @click="deleteTeam(team._id)" class="btn btn-secondary">Delete</button>
         </div>
       </div>
     </div>
@@ -51,16 +50,16 @@
           </div>
           
           <div class="form-group">
-            <label class="label" for="memberEmails">Member Emails (one per line)</label>
+            <label class="label" for="memberIds">Member IDs (one per line)</label>
             <textarea
-              id="memberEmails"
-              v-model="memberEmailsText"
+              id="memberIds"
+              v-model="memberIdsText"
               class="input textarea"
               rows="6"
-              placeholder="john@company.com&#10;jane@company.com&#10;bob@company.com"
+              placeholder="emp001&#10;emp002&#10;emp003"
               required
             ></textarea>
-            <small class="text-secondary">Enter one email address per line</small>
+            <small class="text-secondary">Enter one employee ID per line</small>
           </div>
 
           <div class="modal-actions">
@@ -86,34 +85,30 @@ const editingTeam = ref<Team | null>(null);
 
 const formData = ref({
   name: '',
-  memberEmails: [] as string[]
+  members: [] as string[]
 });
 
-const memberEmailsText = computed({
-  get: () => formData.value.memberEmails.join('\n'),
+const memberIdsText = computed({
+  get: () => formData.value.members.join('\n'),
   set: (value: string) => {
-    formData.value.memberEmails = value
+    formData.value.members = value
       .split('\n')
-      .map(email => email.trim())
-      .filter(email => email.length > 0);
+      .map(id => id.trim())
+      .filter(id => id.length > 0);
   }
 });
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString();
-};
 
 const closeModal = () => {
   showCreateModal.value = false;
   editingTeam.value = null;
-  formData.value = { name: '', memberEmails: [] };
+  formData.value = { name: '', members: [] };
 };
 
 const editTeam = (team: Team) => {
   editingTeam.value = team;
   formData.value = {
     name: team.name,
-    memberEmails: [...team.memberEmails]
+    members: [...team.members]
   };
   showCreateModal.value = true;
 };
@@ -123,11 +118,11 @@ const saveTeam = async () => {
     const updated: Team = {
       ...editingTeam.value,
       name: formData.value.name,
-      memberEmails: formData.value.memberEmails
+      members: formData.value.members
     };
     updateTeam(updated);
   } else {
-    createTeam(formData.value.name, formData.value.memberEmails);
+    createTeam(formData.value.name, formData.value.members);
   }
 
   closeModal();

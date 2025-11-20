@@ -7,29 +7,39 @@ export interface HRAdmin {
 }
 
 export interface Team {
-  id: string;
+  _id: string;
   name: string;
-  memberEmails: string[];
-  createdAt: string;
+  members: string[]; // Employee IDs
 }
 
 export interface FeedbackQuestion {
-  id: string;
-  text: string;
-  type: 'text' | 'rating' | 'multipleChoice';
-  options?: string[]; // for multipleChoice
-  required: boolean;
+  prompt: string;
+  type: 'Multiple Choice' | 'Free' | 'Scale';
+  response?: string;
 }
 
 export interface FeedbackForm {
-  id: string;
-  title: string;
-  description: string;
+  _id?: string; // Optional because backend generates this
+  name: string;
+  creator: string; // User/HR Admin ID
+  reviewer: string; // Employee ID
+  target: string; // Employee ID
+  status: 'Created' | 'Sent' | 'Completed';
+  createdDate: string;
+  completedDate?: string;
   questions: FeedbackQuestion[];
-  teamId: string;
-  createdBy: string; // HR admin ID
-  createdAt: string;
-  sentAt?: string;
+}
+
+// Frontend-only extended types for team-based form creation
+export interface FeedbackFormDraft {
+  _id?: string;
+  name: string;
+  creator: string; // User/HR Admin ID
+  teamId?: string; // Frontend only: for bulk form creation
+  status: 'Created' | 'Sent' | 'Completed';
+  createdDate: string;
+  completedDate?: string;
+  questions: FeedbackQuestion[];
 }
 
 export interface FeedbackResponse {

@@ -22,24 +22,23 @@ watchEffect(() => {
 export function useTeamsStore() {
   function createTeam(name: string, memberEmails: string[]): Team {
     const team: Team = {
-      id: `team_${Date.now()}`,
+      _id: `temp_team_${Date.now()}`, // Backend will generate real ID
       name,
-      memberEmails,
-      createdAt: new Date().toISOString()
+      members: memberEmails,
     };
     teams.value.push(team);
     return team;
   }
 
   function updateTeam(updated: Team) {
-    const index = teams.value.findIndex(t => t.id === updated.id);
+    const index = teams.value.findIndex(t => t._id === updated._id);
     if (index !== -1) {
       teams.value[index] = { ...updated };
     }
   }
 
   function deleteTeam(id: string) {
-    teams.value = teams.value.filter(t => t.id !== id);
+    teams.value = teams.value.filter(t => t._id !== id);
   }
 
   return {

@@ -3,6 +3,7 @@ import LoginView from '@/views/LoginView.vue';
 import DashboardView from '@/views/DashboardView.vue';
 import TeamsView from '@/views/TeamsView.vue';
 import FormBuilderView from '@/views/FormBuilderView.vue';
+import MyFormsView from '@/views/MyFormsView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -24,6 +25,12 @@ const routes: RouteRecordRaw[] = [
     path: '/teams',
     name: 'Teams',
     component: TeamsView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/forms',
+    name: 'MyForms',
+    component: MyFormsView,
     meta: { requiresAuth: true }
   },
   {

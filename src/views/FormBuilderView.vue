@@ -2,9 +2,14 @@
   <div class="container">
     <div class="page-header">
       <h1>Create Feedback Form</h1>
-      <button @click="saveAndSendForm" class="btn btn-primary" :disabled="!canSend">
-        Save & Send Form
-      </button>
+      <div class="header-actions">
+        <button @click="saveFormDraft" class="btn btn-secondary" :disabled="!canSave">
+          Save
+        </button>
+        <button @click="saveAndSendForm" class="btn btn-primary" :disabled="!canSend">
+          Save & Send Form
+        </button>
+      </div>
     </div>
 
     <div class="form-builder">
@@ -13,38 +18,26 @@
           <h2>Form Details</h2>
         </div>
         <div class="form-group">
-          <label class="label" for="formTitle">Form Title</label>
+          <label class="label" for="formName">Form Name</label>
           <input
-            id="formTitle"
-            v-model="form.title"
+            id="formName"
+            v-model="form.name"
             type="text"
             class="input"
-            placeholder="e.g., Q4 Team Feedback"
+            placeholder="e.g., Q3 2025 Peer Feedback"
             required
           />
         </div>
-        
-        <div class="form-group">
-          <label class="label" for="formDescription">Description</label>
-          <textarea
-            id="formDescription"
-            v-model="form.description"
-            class="input textarea"
-            rows="3"
-            placeholder="Provide context for this feedback form..."
-          ></textarea>
-        </div>
-
         <div class="form-group">
           <label class="label" for="teamSelect">Select Team</label>
           <select id="teamSelect" v-model="form.teamId" class="input" required>
             <option value="">-- Select a team --</option>
-            <option v-for="team in availableTeams" :key="team.id" :value="team.id">
-              {{ team.name }} ({{ team.memberEmails.length }} members)
+            <option v-for="team in availableTeams" :key="team._id" :value="team._id">
+              {{ team.name }}
             </option>
           </select>
           <small class="text-secondary">
-            <router-link to="/teams">Manage teams</router-link>
+            Forms will be sent to all team members for peer feedback
           </small>
         </div>
       </div>
@@ -60,19 +53,19 @@
         </div>
 
         <div v-else class="questions-list">
-          <div v-for="(question, idx) in form.questions" :key="question.id" class="question-card">
+          <div v-for="(question, idx) in form.questions" :key="idx" class="question-card">
             <div class="question-header">
               <span class="question-number">Q{{ idx + 1 }}</span>
               <button @click="removeQuestion(idx)" class="btn-icon" title="Remove question">×</button>
             </div>
 
             <div class="form-group">
-              <label class="label">Question Text</label>
+              <label class="label">Question Prompt</label>
               <input
-                v-model="question.text"
+                v-model="question.prompt"
                 type="text"
                 class="input"
-                placeholder="Enter your question..."
+                placeholder="e.g., How effective is this person at communication?"
                 required
               />
             </div>
@@ -80,27 +73,20 @@
             <div class="form-group">
               <label class="label">Question Type</label>
               <select v-model="question.type" class="input">
-                <option value="text">Text Response</option>
-                <option value="rating">Rating (1-5)</option>
-                <option value="multipleChoice">Multiple Choice</option>
+                <option value="Free">Free Response</option>
+                <option value="Scale">Scale (1-5)</option>
+                <option value="Multiple Choice">Multiple Choice</option>
               </select>
             </div>
 
-            <div v-if="question.type === 'multipleChoice'" class="form-group">
-              <label class="label">Options (one per line)</label>
-              <textarea
-                v-model="question.optionsText"
-                class="input textarea"
-                rows="4"
-                placeholder="Option 1&#10;Option 2&#10;Option 3"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input v-model="question.required" type="checkbox" />
-                Required question
-              </label>
+            <div v-if="question.type === 'Multiple Choice'" class="form-group">
+              <label class="label">Options (comma-separated)</label>
+              <input
+                v-model="question.optionsDisplay"
+                type="text"
+                class="input"
+                placeholder="Excellent, Good, Fair, Poor"
+              />
             </div>
           </div>
         </div>
@@ -111,11 +97,11 @@
           <h2>Preview</h2>
         </div>
         <div class="form-preview">
-          <h3>{{ form.title || 'Untitled Form' }}</h3>
-          <p class="text-secondary">{{ form.description || 'No description' }}</p>
+          <h3>{{ form.name || 'Untitled Form' }}</h3>
+          <p class="text-secondary">{{ form.questions.length }} question(s)</p>
           <div class="preview-questions">
-            <div v-for="(q, idx) in form.questions" :key="q.id" class="preview-question">
-              <p><strong>{{ idx + 1 }}. {{ q.text }}</strong> {{ q.required ? '*' : '' }}</p>
+            <div v-for="(q, idx) in form.questions" :key="idx" class="preview-question">
+              <p><strong>{{ idx + 1 }}. {{ q.prompt || 'No prompt yet' }}</strong></p>
               <p class="text-secondary"><small>Type: {{ q.type }}</small></p>
             </div>
           </div>
@@ -128,48 +114,50 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import type { FeedbackForm, FeedbackQuestion, Team } from '@/types';
+import type { FeedbackFormDraft, FeedbackQuestion, Team } from '@/types';
+import { useFormsStore } from '@/store/forms';
 
 const router = useRouter();
+const formsStore = useFormsStore();
 
-// Mock teams data (in production, fetch from backend)
+// Mock teams data (in production, fetch from backend OrgGraph)
 const availableTeams = ref<Team[]>([
   {
-    id: 'team1',
+    _id: 'team1',
     name: 'Engineering Team',
-    memberEmails: ['eng1@company.com', 'eng2@company.com'],
-    createdAt: new Date().toISOString()
+    members: ['emp1', 'emp2', 'emp3']
   },
   {
-    id: 'team2',
+    _id: 'team2',
     name: 'Product Team',
-    memberEmails: ['pm1@company.com', 'pm2@company.com'],
-    createdAt: new Date().toISOString()
+    members: ['emp4', 'emp5']
   }
 ]);
 
-interface QuestionWithText extends FeedbackQuestion {
-  optionsText?: string;
+interface QuestionWithOptions extends FeedbackQuestion {
+  options?: string[];
+  optionsDisplay?: string; // For UI display of comma-separated options
 }
 
 const form = reactive({
-  title: '',
-  description: '',
+  name: '',
   teamId: '',
-  questions: [] as QuestionWithText[]
+  questions: [] as QuestionWithOptions[]
+});
+
+const canSave = computed(() => {
+  return form.name && form.questions.length > 0;
 });
 
 const canSend = computed(() => {
-  return form.title && form.teamId && form.questions.length > 0;
+  return form.name && form.teamId && form.questions.length > 0;
 });
 
 const addQuestion = () => {
-  const newQuestion: QuestionWithText = {
-    id: `q_${Date.now()}`,
-    text: '',
-    type: 'text',
-    required: true,
-    optionsText: ''
+  const newQuestion: QuestionWithOptions = {
+    prompt: '',
+    type: 'Free',
+    options: []
   };
   form.questions.push(newQuestion);
 };
@@ -178,47 +166,70 @@ const removeQuestion = (index: number) => {
   form.questions.splice(index, 1);
 };
 
-const saveAndSendForm = async () => {
-  if (!canSend.value) return;
+const saveFormDraft = () => {
+  if (!canSave.value) return;
 
-  // Convert optionsText to options array for multipleChoice questions
+  // Remove empty options for non-Multiple Choice questions
   const processedQuestions: FeedbackQuestion[] = form.questions.map(q => {
     const question: FeedbackQuestion = {
-      id: q.id,
-      text: q.text,
-      type: q.type,
-      required: q.required
+      prompt: q.prompt,
+      type: q.type
     };
-    
-    if (q.type === 'multipleChoice' && q.optionsText) {
-      question.options = q.optionsText
-        .split('\n')
-        .map(opt => opt.trim())
-        .filter(opt => opt.length > 0);
-    }
-    
     return question;
   });
 
-  const feedbackForm: Partial<FeedbackForm> = {
-    id: `form_${Date.now()}`,
-    title: form.title,
-    description: form.description,
+  // Get current HR admin ID
+  const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
+
+  const feedbackFormDraft: FeedbackFormDraft = {
+    name: form.name,
+    creator: creatorId,
     teamId: form.teamId,
-    questions: processedQuestions,
-    createdBy: localStorage.getItem('hrAdminId') || 'unknown',
-    createdAt: new Date().toISOString(),
-    sentAt: new Date().toISOString()
+    status: 'Created',
+    createdDate: new Date().toISOString(),
+    questions: processedQuestions
   };
 
+  formsStore.saveForm(feedbackFormDraft);
+  alert('Form saved successfully!');
+  router.push('/forms');
+};
+
+const saveAndSendForm = async () => {
+  if (!canSend.value) return;
+
+  // Remove empty options for non-Multiple Choice questions
+  const processedQuestions: FeedbackQuestion[] = form.questions.map(q => {
+    const question: FeedbackQuestion = {
+      prompt: q.prompt,
+      type: q.type
+    };
+    return question;
+  });
+
+  // Get current HR admin ID
+  const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
+
+  const feedbackFormDraft: FeedbackFormDraft = {
+    name: form.name,
+    creator: creatorId,
+    teamId: form.teamId,
+    status: 'Sent',
+    createdDate: new Date().toISOString(),
+    questions: processedQuestions
+  };
+
+  // Save form and mark as sent
+  formsStore.saveForm(feedbackFormDraft);
+  
   // In production: 
-  // 1. Save form to backend
-  // 2. Trigger email sending to team members
-  // 3. Show success message
+  // 1. Create individual FeedbackForm documents for each reviewer-target pair in the team
+  // 2. Send emails to reviewers with form links
   
-  console.log('Saving and sending form:', feedbackForm);
+  console.log('Saving and sending form:', feedbackFormDraft);
   
-  alert(`Form "${form.title}" created and sent to ${availableTeams.value.find(t => t.id === form.teamId)?.name}!`);
+  const teamName = availableTeams.value.find(t => t._id === form.teamId)?.name;
+  alert(`Form created and sent to ${teamName}!`);
   
   router.push('/dashboard');
 };
@@ -230,6 +241,11 @@ const saveAndSendForm = async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .page-header h1 {

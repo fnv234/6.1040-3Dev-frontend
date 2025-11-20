@@ -66,6 +66,10 @@
       <div class="section">
         <h2>Quick Actions</h2>
         <div class="actions-grid">
+          <router-link to="/forms" class="action-card card">
+            <h3>My Forms</h3>
+            <p class="text-secondary">View and manage your feedback forms</p>
+          </router-link>
           <router-link to="/forms/new" class="action-card card">
             <h3>Create New Form</h3>
             <p class="text-secondary">Build a customizable feedback form</p>
@@ -91,11 +95,11 @@ const loading = ref(true);
 
 const teamStats = computed<TeamStatistics[]>(() => {
   return teams.value.map(team => {
-    const totalResponses = team.memberEmails.length; // placeholder: 1 response per member
-    const responseRate = team.memberEmails.length > 0 ? 80 : 0; // placeholder value
+    const totalResponses = team.members.length; // placeholder: 1 response per member
+    const responseRate = team.members.length > 0 ? 80 : 0; // placeholder value
 
     return {
-      teamId: team.id,
+      teamId: team._id,
       teamName: team.name,
       totalResponses,
       responseRate,

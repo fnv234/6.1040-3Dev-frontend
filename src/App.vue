@@ -8,6 +8,7 @@
         <div class="navbar-links">
           <router-link to="/dashboard" class="nav-link">Dashboard</router-link>
           <router-link to="/teams" class="nav-link">Teams</router-link>
+          <router-link to="/forms" class="nav-link">My Forms</router-link>
           <router-link to="/forms/new" class="nav-link">Create Form</router-link>
           <button @click="handleLogout" class="btn btn-secondary">Logout</button>
         </div>
