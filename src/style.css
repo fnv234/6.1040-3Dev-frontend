@@ -1,14 +1,15 @@
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --bg: #ffffff;
-  --bg-secondary: #f9fafb;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-secondary: #6b7280;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
+  --primary: #8C916C;
+  --primary-hover: #697254;
+  --bg: #F5F1ED;
+  --bg-secondary: #FFFCF9;
+  --border: #697254;
+  --title-primary: #697254;
+  --text: #2C2C2C;
+  --text-secondary: #6B655C;
+  --success: #6B8E6B;
+  --warning: #D4A574;
+  --error: #C97064;
 }
 
 * {
@@ -43,8 +44,7 @@ body {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  padding: 1rem;
 }
 
 .btn {
@@ -69,13 +69,12 @@ body {
 }
 
 .btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--primary);
+  color: white;
 }
 
 .btn-secondary:hover {
-  background: var(--border);
+  background: var(--primary-hover);
 }
 
 .input {

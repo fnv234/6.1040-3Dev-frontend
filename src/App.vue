@@ -35,7 +35,7 @@ const handleLogout = () => {
 
 <style scoped>
 .navbar {
-  background: white;
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   padding: 1rem 0;
   margin-bottom: 2rem;
@@ -57,7 +57,7 @@ const handleLogout = () => {
 .navbar-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--title-primary);
   margin: 0;
 }
 

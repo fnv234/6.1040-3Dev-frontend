@@ -138,6 +138,11 @@ const regenerateSummary = async (teamId: string) => {
   margin-bottom: 2rem;
 }
 
+.dashboard-header h1 {
+  color: var(--title-primary);
+  text-shadow: 1px 1px var(--primary);
+}
+
 .loading {
   text-align: center;
   padding: 3rem;
@@ -172,6 +177,10 @@ const regenerateSummary = async (teamId: string) => {
   margin-bottom: 2rem;
 }
 
+.section h2 {
+  color: var(--title-primary);
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem;
@@ -203,11 +212,11 @@ const regenerateSummary = async (teamId: string) => {
 }
 
 .badge {
-  background: var(--bg-secondary);
+  background: var(--primary);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: white;
 }
 
 .team-stats {

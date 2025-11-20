@@ -9,7 +9,9 @@
 
     <div class="form-builder">
       <div class="builder-section card">
-        <h2>Form Details</h2>
+        <div class="section-header">
+          <h2>Form Details</h2>
+        </div>
         <div class="form-group">
           <label class="label" for="formTitle">Form Title</label>
           <input
@@ -105,7 +107,9 @@
       </div>
 
       <div class="builder-section card preview-section">
-        <h2>Preview</h2>
+        <div class="section-header">
+          <h2>Preview</h2>
+        </div>
         <div class="form-preview">
           <h3>{{ form.title || 'Untitled Form' }}</h3>
           <p class="text-secondary">{{ form.description || 'No description' }}</p>
@@ -228,6 +232,11 @@ const saveAndSendForm = async () => {
   margin-bottom: 2rem;
 }
 
+.page-header h1 {
+  color: var(--title-primary);
+  text-shadow: 1px 1px var(--primary);
+}
+
 .form-builder {
   display: flex;
   flex-direction: column;
@@ -243,6 +252,7 @@ const saveAndSendForm = async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  color: var(--title-primary);
 }
 
 .textarea {
@@ -265,7 +275,7 @@ const saveAndSendForm = async () => {
 
 .question-card {
   padding: 1rem;
-  background: var(--bg-secondary);
+  background: white;
   border-radius: 6px;
   border: 1px solid var(--border);
 }
@@ -317,7 +327,7 @@ const saveAndSendForm = async () => {
 }
 
 .preview-section {
-  background: var(--bg-secondary);
+  background: var(--bg);
 }
 
 .form-preview {

@@ -148,6 +148,11 @@ const deleteTeam = (teamId: string) => {
   margin-bottom: 2rem;
 }
 
+.page-header h1 {
+  color: var(--title-primary);
+  text-shadow: 1px 1px var(--primary);
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem;
@@ -182,7 +187,7 @@ const deleteTeam = (teamId: string) => {
 .team-members {
   margin: 1rem 0;
   padding: 1rem;
-  background: var(--bg-secondary);
+  background: white;
   border-radius: 6px;
 }
 

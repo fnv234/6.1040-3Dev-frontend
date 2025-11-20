@@ -118,6 +118,7 @@ const handleSubmit = async () => {
 
 .login-card h1 {
   margin-bottom: 0.5rem;
+  color: var(--title-primary);
 }
 
 .login-form {
@@ -134,5 +135,20 @@ const handleSubmit = async () => {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.link-button:hover {
+  color: var(--primary-hover);
 }
 </style>
