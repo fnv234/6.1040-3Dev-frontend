@@ -1,171 +1,286 @@
-# API Specification: matchamatch Backend
+# 360-Degree Feedback System API Specification
 
-This document describes the REST API for the matchamatch backend, which consists of four concepts: ExperienceLog, PlaceDirectory, UserDirectory, and RecommendationEngine.
+This document describes the REST API endpoints for the 360-degree feedback system built with the concepts architecture.
 
-**Base URL:** `http://localhost:8000/api`
+## Base URL
+```
+https://six-1040-3dev-backend.onrender.com/api
+```
 
-**Content Type:** All requests and responses use `application/json`
+## Authentication
+All endpoints require proper authentication. Authentication is handled through the authenticated routes sync system.
 
-**HTTP Method:** All endpoints use `POST`
+## Concepts Overview
+
+The system is built around four main concepts:
+- **FeedbackForm**: Manages feedback forms and questions
+- **OrgGraph**: Maintains organizational hierarchy
+- **ReviewCycle**: Coordinates feedback cycles
+- **ReportSynthesis**: Generates privacy-preserving reports
 
 ---
 
-## ExperienceLog Concept
+## FeedbackForm Endpoints
 
-**Purpose:** Capture a user's personal experience at a place with structured ratings and notes, and enable AI-powered insights about their overall preferences and trends.
-
-### POST /api/ExperienceLog/create_log
-
-**Description:** Creates a new experience log entry for a user at a specific place.
-
-**Requirements:**
-- `rating` must be in the inclusive range [1,5]
-- `sweetness` must be in the inclusive range [1,5]
-- `strength` must be in the inclusive range [1,5]
-
-**Effects:**
-- Adds a new Log with a new logId, given parameters, and timestamp = now() to the set of Logs
-- Triggers a refresh of recommendations for the user
+### Create Feedback Form
+```http
+POST /api/FeedbackForm/createFeedbackForm
+```
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)",
-  "placeId": "string (ID)",
-  "rating": "number (1-5)",
-  "sweetness": "number (1-5)",
-  "strength": "number (1-5)",
-  "notes": "string (optional)",
-  "photo": "string (URL, optional)"
+  "reviewer": "employee-id",
+  "target": "employee-id", 
+  "questions": [
+    {
+      "prompt": "How is their communication?",
+      "type": "Free"
+    },
+    {
+      "prompt": "Rate their leadership skills (1-10)",
+      "type": "Scale"
+    },
+    {
+      "prompt": "Choose their best quality",
+      "type": "Multiple Choice"
+    }
+  ]
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "logId": "string (ID)"
+  "feedbackForm": "form-id"
 }
 ```
 
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
+### Send Feedback Form
+```http
+POST /api/FeedbackForm/sendFeedbackForm
 ```
-
----
-
-### POST /api/ExperienceLog/update_log
-
-**Description:** Updates an existing experience log entry.
-
-**Requirements:**
-- `logId` must exist in the set of Logs
-- If `rating` is provided, it must be in the inclusive range [1,5]
-- If `sweetness` is provided, it must be in the inclusive range [1,5]
-- If `strength` is provided, it must be in the inclusive range [1,5]
-
-**Effects:**
-- Updates the log where log.logId = logId with non-null parameters
 
 **Request Body:**
 ```json
 {
-  "logId": "string (ID)",
-  "rating": "number (1-5, optional)",
-  "sweetness": "number (1-5, optional)",
-  "strength": "number (1-5, optional)",
-  "notes": "string (optional)",
-  "photo": "string (URL, optional)"
+  "feedbackForm": "form-id"
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "log": {
-    "_id": "string (ID)",
-    "userId": "string (ID)",
-    "placeId": "string (ID)",
-    "timestamp": "string (ISO date)",
-    "rating": "number",
-    "sweetness": "number",
-    "strength": "number",
-    "notes": "string (optional)",
-    "photo": "string (optional)"
+  "link": "/feedback/form-id"
+}
+```
+
+### Submit Feedback Form
+```http
+POST /api/FeedbackForm/submitFeedbackForm
+```
+
+**Request Body:**
+```json
+{
+  "feedbackForm": "form-id",
+  "responses": {
+    "0": "Great communication skills",
+    "1": "8",
+    "2": "Leadership"
   }
 }
 ```
 
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/ExperienceLog/delete_log
-
-**Description:** Deletes an experience log entry.
-
-**Requirements:**
-- `logId` must exist in the set of Logs
-
-**Effects:**
-- Removes the log where log.logId = logId from the set of Logs
-
-**Request Body:**
-```json
-{
-  "logId": "string (ID)"
-}
-```
-
-**Success Response Body:**
+**Response:**
 ```json
 {}
 ```
 
-**Error Response Body:**
+### Get Feedback Form
+```http
+POST /api/FeedbackForm/getFeedbackForm
+```
+
+**Request Body:**
 ```json
 {
-  "error": "string"
+  "id": "form-id"
+}
+```
+
+**Response:**
+```json
+{
+  "feedbackForm": {
+    "_id": "form-id",
+    "reviewer": "employee-id",
+    "target": "employee-id",
+    "status": "Created|Sent|Completed",
+    "createdDate": "2024-01-01T00:00:00.000Z",
+    "completedDate": "2024-01-01T00:00:00.000Z",
+    "questions": [...]
+  }
+}
+```
+
+### Get Feedback Forms by Target
+```http
+POST /api/FeedbackForm/getFeedbackFormsByTarget
+```
+
+**Request Body:**
+```json
+{
+  "target": "employee-id",
+  "startDate": "2024-01-01T00:00:00.000Z",
+  "endDate": "2024-12-31T23:59:59.999Z"
+}
+```
+
+### Get Feedback Forms by Reviewer
+```http
+POST /api/FeedbackForm/getFeedbackFormsByReviewer
+```
+
+**Request Body:**
+```json
+{
+  "reviewer": "employee-id"
 }
 ```
 
 ---
 
-### POST /api/ExperienceLog/_get_user_logs
+## OrgGraph Endpoints
 
-**Description:** Retrieves all experience logs for a specific user.
-
-**Effects:**
-- Returns all logs where log.userId = userId
+### Import Roster
+```http
+POST /api/OrgGraph/importRoster
+```
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)"
+  "sourceData": {
+    "employees": [
+      {
+        "id": "employee-id",
+        "manager": "manager-id",
+        "teamName": "Engineering"
+      }
+    ]
+  }
 }
 ```
 
-**Success Response Body:**
+### Update Manager
+```http
+POST /api/OrgGraph/updateManager
+```
+
+**Request Body:**
 ```json
 {
-  "logs": [
+  "employee": "employee-id",
+  "newManager": "manager-id"
+}
+```
+
+### Update Team
+```http
+POST /api/OrgGraph/updateTeam
+```
+
+**Request Body:**
+```json
+{
+  "employee": "employee-id",
+  "newTeamName": "Product"
+}
+```
+
+### Get Manager
+```http
+POST /api/OrgGraph/getManager
+```
+
+**Request Body:**
+```json
+{
+  "employee": "employee-id"
+}
+```
+
+**Response:**
+```json
+{
+  "manager": "manager-id"
+}
+```
+
+### Get Direct Reports
+```http
+POST /api/OrgGraph/getDirectReports
+```
+
+**Request Body:**
+```json
+{
+  "employee": "employee-id"
+}
+```
+
+**Response:**
+```json
+{
+  "reports": ["employee-id-1", "employee-id-2"]
+}
+```
+
+### Get Peers
+```http
+POST /api/OrgGraph/getPeers
+```
+
+**Request Body:**
+```json
+{
+  "employee": "employee-id"
+}
+```
+
+**Response:**
+```json
+{
+  "peers": ["peer-id-1", "peer-id-2"]
+}
+```
+
+### Get All Employees
+```http
+POST /api/OrgGraph/getAllEmployees
+```
+
+**Response:**
+```json
+{
+  "employees": ["employee-id-1", "employee-id-2"]
+}
+```
+
+### Get All Teams
+```http
+POST /api/OrgGraph/getAllTeams
+```
+
+**Response:**
+```json
+{
+  "teams": [
     {
-      "_id": "string (ID)",
-      "userId": "string (ID)",
-      "placeId": "string (ID)",
-      "timestamp": "string (ISO date)",
-      "rating": "number",
-      "sweetness": "number",
-      "strength": "number",
-      "notes": "string (optional)",
-      "photo": "string (optional)"
+      "_id": "team-id",
+      "name": "Engineering"
     }
   ]
 }
@@ -173,35 +288,141 @@ This document describes the REST API for the matchamatch backend, which consists
 
 ---
 
-### POST /api/ExperienceLog/_get_place_logs
+## ReviewCycle Endpoints
 
-**Description:** Retrieves all experience logs for a specific user at a specific place.
-
-**Effects:**
-- Returns all logs where log.userId = userId and log.placeId = placeId
+### Create Cycle
+```http
+POST /api/ReviewCycle/createCycle
+```
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)",
-  "placeId": "string (ID)"
+  "creator": "employee-id",
+  "form": "form-id",
+  "startDate": "2024-01-01T00:00:00.000Z",
+  "endDate": "2024-01-31T23:59:59.999Z"
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "logs": [
+  "cycle": "cycle-id"
+}
+```
+
+### Configure Assignments
+```http
+POST /api/ReviewCycle/configureAssignments
+```
+
+**Request Body:**
+```json
+{
+  "cycle": "cycle-id",
+  "targets": ["employee-id-1", "employee-id-2"]
+}
+```
+
+### Add Reviewers
+```http
+POST /api/ReviewCycle/addReviewers
+```
+
+**Request Body:**
+```json
+{
+  "cycle": "cycle-id",
+  "target": "employee-id",
+  "reviewers": ["reviewer-id-1", "reviewer-id-2"]
+}
+```
+
+### Activate Cycle
+```http
+POST /api/ReviewCycle/activate
+```
+
+**Request Body:**
+```json
+{
+  "cycle": "cycle-id"
+}
+```
+
+### Submit Feedback
+```http
+POST /api/ReviewCycle/submitFeedback
+```
+
+**Request Body:**
+```json
+{
+  "cycle": "cycle-id",
+  "target": "employee-id",
+  "reviewer": "reviewer-id",
+  "responses": {
+    "0": "Great communication",
+    "1": "8",
+    "2": "Leadership"
+  }
+}
+```
+
+### Close Cycle
+```http
+POST /api/ReviewCycle/close
+```
+
+**Request Body:**
+```json
+{
+  "cycle": "cycle-id"
+}
+```
+
+### Get Active Cycles
+```http
+POST /api/ReviewCycle/getActiveCycles
+```
+
+**Response:**
+```json
+{
+  "cycles": [
     {
-      "_id": "string (ID)",
-      "userId": "string (ID)",
-      "placeId": "string (ID)",
-      "timestamp": "string (ISO date)",
-      "rating": "number",
-      "sweetness": "number",
-      "strength": "number",
-      "notes": "string (optional)",
-      "photo": "string (optional)"
+      "_id": "cycle-id",
+      "createdBy": "employee-id",
+      "isActive": true,
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-01-31T23:59:59.999Z"
+    }
+  ]
+}
+```
+
+### Get Reviewer Tasks
+```http
+POST /api/ReviewCycle/getReviewerTasks
+```
+
+**Request Body:**
+```json
+{
+  "reviewer": "employee-id"
+}
+```
+
+**Response:**
+```json
+{
+  "tasks": [
+    {
+      "cycle": "cycle-id",
+      "target": "employee-id",
+      "form": "form-id",
+      "endDate": "2024-01-31T23:59:59.999Z"
     }
   ]
 }
@@ -209,592 +430,203 @@ This document describes the REST API for the matchamatch backend, which consists
 
 ---
 
-### POST /api/ExperienceLog/_get_average_rating
+## ReportSynthesis Endpoints
 
-**Description:** Calculates the average rating for a user at a specific place.
-
-**Effects:**
-- Returns the average of all ratings for the user at the place
+### Ingest Responses
+```http
+POST /api/ReportSynthesis/ingestResponses
+```
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)",
-  "placeId": "string (ID)"
+  "target": "employee-id",
+  "form": "form-id",
+  "responses": [
+    {
+      "questionIndex": 0,
+      "questionText": "How is their communication?",
+      "response": "Great communication skills",
+      "reviewer": "reviewer-id"
+    }
+  ],
+  "anonymityFlag": true,
+  "kThreshold": 3
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "averageRating": "number"
+  "responseSet": "response-set-id"
 }
 ```
 
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
+### Apply K-Anonymity
+```http
+POST /api/ReportSynthesis/applyKAnonymity
 ```
-
----
-
-### POST /api/ExperienceLog/_get_tried_places
-
-**Description:** Retrieves all unique places a user has visited.
-
-**Effects:**
-- Returns all unique placeIds from logs where log.userId = userId
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)"
+  "responseSet": "response-set-id"
 }
 ```
 
-**Success Response Body:**
-```json
-{
-  "places": ["string (ID)", "string (ID)", ...]
-}
+### Extract Themes
+```http
+POST /api/ReportSynthesis/extractThemes
 ```
-
----
-
-### POST /api/ExperienceLog/generate_profile_summary
-
-**Description:** Generates an AI-powered summary of a user's matcha preferences based on their experience logs.
-
-**Requirements:**
-- There must exist at least one log for the user
-
-**Effects:**
-- Calls an LLM with the user's logs (ratings, sweetness, strength, notes, and places)
-- Returns a concise textual summary describing the user's preferences and patterns
 
 **Request Body:**
 ```json
 {
-  "userId": "string (ID)",
-  "llm": "object (GeminiLLM instance)"
+  "responseSet": "response-set-id"
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "summary": "string (max 3 sentences)"
+  "themes": ["Communication", "Leadership", "Collaboration"]
 }
 ```
 
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
+### Draft Summary with LLM
+```http
+POST /api/ReportSynthesis/draftSummaryLLM
 ```
-
----
-
-## PlaceDirectory Concept
-
-**Purpose:** Represent and manage known matcha-serving locations.
-
-### POST /api/PlaceDirectory/create_place
-
-**Description:** Creates a new place in the directory.
-
-**Requirements:**
-- `name` and `address` must be non-empty
-
-**Effects:**
-- Adds a new Place with placeId and all given attributes to the set of Places
 
 **Request Body:**
 ```json
 {
-  "name": "string",
-  "address": "string",
-  "coords": [number, number],
-  "styles": ["string"],
-  "priceRange": "string",
-  "hours": "string (optional)",
-  "photos": ["string (URL)"] 
+  "responseSet": "response-set-id",
+  "themes": ["Communication", "Leadership"]
 }
 ```
 
-**Success Response Body:**
+**Response:**
 ```json
 {
-  "placeId": "string (ID)"
+  "draft": "Based on the feedback collected, the employee demonstrates strong communication skills..."
 }
 ```
 
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
+### Approve Summary
+```http
+POST /api/ReportSynthesis/approveSummary
 ```
-
----
-
-### POST /api/PlaceDirectory/edit_place
-
-**Description:** Updates an existing place's information.
-
-**Requirements:**
-- `placeId` must exist in the set of Places
-
-**Effects:**
-- Updates the place where p.placeId = placeId with any non-null parameters
 
 **Request Body:**
 ```json
 {
-  "placeId": "string (ID)",
-  "name": "string (optional)",
-  "address": "string (optional)",
-  "coords": [number, number] (optional),
-  "styles": ["string"] (optional),
-  "priceRange": "string (optional)",
-  "hours": "string (optional)",
-  "photos": ["string (URL)"] (optional)
+  "responseSet": "response-set-id",
+  "finalText": "Final approved summary text",
+  "keyQuotes": ["Great communication", "Strong leadership"]
 }
 ```
 
-**Success Response Body:**
-```json
-{}
+### Get Final Report
+```http
+POST /api/ReportSynthesis/getFinalReport
 ```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/PlaceDirectory/delete_place
-
-**Description:** Deletes a place from the directory.
-
-**Requirements:**
-- `placeId` must exist in the set of Places
-
-**Effects:**
-- Removes the place where p.placeId = placeId from the set of Places
 
 **Request Body:**
 ```json
 {
-  "placeId": "string (ID)"
+  "responseSet": "response-set-id"
 }
 ```
 
-**Success Response Body:**
-```json
-{}
-```
-
-**Error Response Body:**
+**Response:**
 ```json
 {
-  "error": "string"
-}
-```
-
----
-
-### POST /api/PlaceDirectory/_find_nearby
-
-**Description:** Finds places within a specified radius of given coordinates.
-
-**Requirements:**
-- `radius` must be greater than 0
-
-**Effects:**
-- Returns all placeIds where distance(p.coordinates, coords) <= radius
-
-**Request Body:**
-```json
-{
-  "coords": [number, number],
-  "radius": "number (in km)"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "places": ["string (ID)", "string (ID)", ...]
-}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/PlaceDirectory/_search_by_name
-
-**Description:** Searches for places by name (case-insensitive substring match).
-
-**Effects:**
-- Returns all placeIds where query is contained in p.name
-
-**Request Body:**
-```json
-{
-  "query": "string"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "places": ["string (ID)", "string (ID)", ...]
-}
-```
-
----
-
-### POST /api/PlaceDirectory/_filter_places
-
-**Description:** Filters places by price range, hours, and/or preparation style.
-
-**Effects:**
-- Returns all placeIds matching the provided filters (null filters are ignored)
-
-**Request Body:**
-```json
-{
-  "priceRange": "string (optional)",
-  "hours": "string (optional)",
-  "style": "string (optional)"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "places": ["string (ID)", "string (ID)", ...]
-}
-```
-
----
-
-### POST /api/PlaceDirectory/_get_details
-
-**Description:** Retrieves detailed information about a specific place.
-
-**Requirements:**
-- `placeId` must exist in the set of Places
-
-**Effects:**
-- Returns the place where p.placeId = placeId
-
-**Request Body:**
-```json
-{
-  "placeId": "string (ID)"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "place": {
-    "_id": "string (ID)",
-    "name": "string",
-    "address": "string",
-    "coordinates": [number, number],
-    "preparationStyles": ["string"],
-    "priceRange": "string",
-    "hours": "string (optional)",
-    "photos": ["string (URL)"]
+  "report": {
+    "_id": "report-id",
+    "target": "employee-id",
+    "textSummary": "Final summary text",
+    "keyQuotes": ["Quote 1", "Quote 2"],
+    "metrics": {
+      "totalResponses": 5,
+      "uniqueReviewers": 3
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z"
   }
 }
 ```
 
-**Error Response Body:**
+### Get Reports by Target
+```http
+POST /api/ReportSynthesis/getReportsByTarget
+```
+
+**Request Body:**
 ```json
 {
-  "error": "string"
+  "target": "employee-id"
 }
 ```
 
 ---
 
-## UserDirectory Concept
+## Error Responses
 
-**Purpose:** Represent app users with identity, preferences, and saved places.
+All endpoints may return error responses in the following format:
 
-### POST /api/UserDirectory/register_user
-
-**Description:** Registers a new user in the system.
-
-**Requirements:**
-- `userId` must not already exist
-- `displayName` and `email` must be non-empty
-
-**Effects:**
-- Adds a new User with given attributes and empty savedPlaces, preferences to the set of Users
-
-**Request Body:**
 ```json
 {
-  "userId": "string (ID)",
-  "displayName": "string",
-  "email": "string"
+  "error": "Error message describing what went wrong"
 }
 ```
 
-**Success Response Body:**
-```json
-{
-  "userId": "string (ID)"
-}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
+Common HTTP status codes:
+- `200`: Success
+- `400`: Bad Request (invalid input)
+- `404`: Not Found (resource doesn't exist)
+- `500`: Internal Server Error
 
 ---
 
-### POST /api/UserDirectory/save_place
+## Vue.js Integration Notes
 
-**Description:** Adds a place to a user's saved places list.
+For Vue.js frontend integration:
 
-**Requirements:**
-- `userId` must exist in the set of Users
+1. **Base API Client**: Create an axios-based API client with the base URL
+2. **Authentication**: Implement token-based auth headers for all requests
+3. **Error Handling**: Handle error responses consistently across components
+4. **Loading States**: Show loading indicators during API calls
+5. **Data Models**: Create TypeScript interfaces matching the API response types
 
-**Effects:**
-- Adds placeId to user's savedPlaces set
+### Example Vue.js API Service:
 
-**Request Body:**
-```json
-{
-  "userId": "string (ID)",
-  "placeId": "string (ID)"
-}
-```
+```typescript
+import axios from 'axios';
 
-**Success Response Body:**
-```json
-{}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/UserDirectory/unsave_place
-
-**Description:** Removes a place from a user's saved places list.
-
-**Requirements:**
-- `userId` must exist in the set of Users
-- `placeId` must be in user's savedPlaces
-
-**Effects:**
-- Removes placeId from user's savedPlaces set
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)",
-  "placeId": "string (ID)"
-}
-```
-
-**Success Response Body:**
-```json
-{}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/UserDirectory/update_preferences
-
-**Description:** Updates a user's preferences.
-
-**Requirements:**
-- `userId` must exist in the set of Users
-
-**Effects:**
-- Replaces user's preferences with newPrefs
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)",
-  "newPrefs": {
-    "key1": "value1",
-    "key2": "value2"
-  }
-}
-```
-
-**Success Response Body:**
-```json
-{}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/UserDirectory/_get_saved_places
-
-**Description:** Retrieves a user's saved places.
-
-**Requirements:**
-- `userId` must exist in the set of Users
-
-**Effects:**
-- Returns user's savedPlaces set
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "places": ["string (ID)", "string (ID)", ...]
-}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-## RecommendationEngine Concept
-
-**Purpose:** Suggest places for users to try based on basic matching criteria.
-
-### POST /api/RecommendationEngine/get_recommendations
-
-**Description:** Retrieves personalized place recommendations for a user.
-
-**Effects:**
-- Returns cached recommendations if they exist and are recent
-- Otherwise computes fresh recommendations
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)"
-}
-```
-
-**Success Response Body:**
-```json
-{
-  "recommendations": ["string (ID)", "string (ID)", ...]
-}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
-### POST /api/RecommendationEngine/refresh_recommendations
-
-**Description:** Forces a refresh of recommendations for a user based on their current data.
-
-**Effects:**
-- Computes new recommendations based on savedPlaces, preferences, and triedPlaces
-- Updates recommendations[userId] and lastUpdated[userId]
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)",
-  "savedPlaces": ["string (ID)"],
-  "preferences": {
-    "key1": "value1",
-    "key2": "value2"
+const api = axios.create({
+  baseURL: 'https://six-1040-3dev-backend.onrender.com/api',
+  headers: {
+    'Content-Type': 'application/json',
   },
-  "triedPlaces": ["string (ID)"]
-}
+});
+
+export const feedbackAPI = {
+  createForm: (data: CreateFormRequest) => 
+    api.post('/FeedbackForm/createFeedbackForm', data),
+  
+  submitForm: (data: SubmitFormRequest) => 
+    api.post('/FeedbackForm/submitFeedbackForm', data),
+  
+  getReviewerTasks: (reviewer: string) => 
+    api.post('/ReviewCycle/getReviewerTasks', { reviewer }),
+};
 ```
 
-**Success Response Body:**
-```json
-{}
-```
+### Key Frontend Features to Implement:
 
----
-
-### POST /api/RecommendationEngine/clear_recommendations
-
-**Description:** Clears all cached recommendations for a user.
-
-**Effects:**
-- Removes recommendations[userId] and lastUpdated[userId]
-
-**Request Body:**
-```json
-{
-  "userId": "string (ID)"
-}
-```
-
-**Success Response Body:**
-```json
-{}
-```
-
----
-
-## Notes
-
-- All IDs are UUID v7 strings
-- Timestamps are ISO 8601 formatted strings
-- Coordinates are [longitude, latitude] pairs
-- Methods starting with `_` are queries that return data without side effects
-- The backend automatically handles synchronization between concepts (e.g., creating a log triggers recommendation refresh)
+1. **Dashboard**: Show reviewer tasks and cycle status
+2. **Form Builder**: Create and configure feedback forms
+3. **Feedback Submission**: User-friendly form interface
+4. **Org Chart Viewer**: Visualize organizational structure
+5. **Report Viewer**: Display generated feedback reports
+6. **Admin Panel**: Manage cycles and view analytics

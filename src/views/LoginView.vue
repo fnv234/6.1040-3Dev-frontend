@@ -51,6 +51,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+// dont want to use userDirectory concept?? change later
 import { userDirectory } from '@/api/client';
 import { useAuthStore } from '@/store/auth';
 
