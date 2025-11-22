@@ -51,9 +51,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
-// dont want to use userDirectory concept?? change later
-import { userDirectory } from '@/api/client';
 import { useAuthStore } from '@/store/auth';
 
 const router = useRouter();
@@ -78,17 +75,7 @@ const handleSubmit = async () => {
   
   try {
     if (mode.value === 'signup') {
-      const admin = auth.register(email.value, password.value);
-      // Optionally register user in backend
-      try {
-        await userDirectory.register({
-          userId: admin.id,
-          displayName: admin.displayName,
-          email: admin.email
-        });
-      } catch {
-        // Ignore backend registration errors in demo
-      }
+      auth.register(email.value, password.value);
       auth.login(email.value, password.value);
     } else {
       auth.login(email.value, password.value);

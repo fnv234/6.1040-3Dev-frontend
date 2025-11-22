@@ -2,6 +2,7 @@
 
 Colors (hex): 
 A0CA92, 75B09C, 998650, B6C197, 8A9B68, 937B63, ABC8C0, 7EA2AA, 427AA1
+B69C85, DBD0C4, A7AD89
 
 A TypeScript + Vue 3 HR administration portal for managing customizable feedback forms, team members, and analyzing responses with optional LLM-powered insights.
 

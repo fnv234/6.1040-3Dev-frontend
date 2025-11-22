@@ -38,6 +38,10 @@ const routes: RouteRecordRaw[] = [
     name: 'FormBuilder',
     component: FormBuilderView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/login'
   }
 ];
 
