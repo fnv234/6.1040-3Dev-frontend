@@ -33,7 +33,7 @@
         <h2>Team Feedback Summary</h2>
         <div v-if="teamStats.length === 0" class="empty-state card">
           <p>No feedback data available yet.</p>
-          <router-link to="/teams" class="btn btn-primary">Create a Team</router-link>
+          <router-link to="/teams"><GradientButton>Create a Team</GradientButton></router-link>
         </div>
         <div v-else class="team-list">
           <div v-for="team in teamStats" :key="team.teamId" class="team-card card">
@@ -54,9 +54,9 @@
             <div v-if="team.sentimentSummary" class="sentiment-summary">
               <h4>AI Summary</h4>
               <p class="text-secondary">{{ team.sentimentSummary }}</p>
-              <button class="btn btn-secondary btn-sm" @click="regenerateSummary(team.teamId)">
+              <GradientButton class="btn-sm" @click="regenerateSummary(team.teamId)" variant="variant">
                 Regenerate with LLM
-              </button>
+              </GradientButton>
             </div>
           </div>
         </div>
@@ -85,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import GradientButton from '@/components/ui/GradientButton.vue';
 import { computed, ref, onMounted } from 'vue';
 import type { TeamStatistics } from '@/types';
 import { useTeamsStore } from '@/store/teams';

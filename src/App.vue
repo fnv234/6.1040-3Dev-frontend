@@ -10,7 +10,7 @@
           <router-link to="/teams" class="nav-link">Teams</router-link>
           <router-link to="/forms" class="nav-link">My Forms</router-link>
           <router-link to="/forms/new" class="nav-link">Create Form</router-link>
-          <button @click="handleLogout" class="btn btn-secondary">Logout</button>
+          <GradientButton @click="handleLogout" variant="variant">Logout</GradientButton>
         </div>
       </div>
     </nav>
@@ -19,19 +19,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth';
+import GradientButton from '@/components/ui/GradientButton.vue';
 
-const router = useRouter();
-const auth = useAuthStore();
+const router = useRouter()
+const auth = useAuthStore()
 
-const isAuthenticated = computed(() => auth.isAuthenticated.value);
+const isAuthenticated = computed(() => auth.isAuthenticated.value)
 
 const handleLogout = () => {
-  auth.logout();
-  router.push('/login');
-};
+  auth.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>

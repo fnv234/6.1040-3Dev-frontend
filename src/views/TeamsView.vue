@@ -2,13 +2,13 @@
   <div class="container">
     <div class="page-header">
       <h1>Team Management</h1>
-      <button @click="showCreateModal = true" class="btn btn-primary">+ Create Team</button>
+      <GradientButton @click="showCreateModal = true">+ Create Team</GradientButton>
     </div>
 
     <div v-if="teams.length === 0" class="empty-state card">
       <h3>No teams yet</h3>
       <p class="text-secondary">Create your first team to start sending feedback forms</p>
-      <button @click="showCreateModal = true" class="btn btn-primary">Create Team</button>
+      <GradientButton @click="showCreateModal = true">Create Team</GradientButton>
     </div>
 
     <div v-else class="teams-list">
@@ -26,8 +26,8 @@
           </ul>
         </div>
         <div class="team-actions">
-          <button @click="editTeam(team)" class="btn btn-secondary">Edit</button>
-          <button @click="deleteTeam(team._id)" class="btn btn-secondary">Delete</button>
+          <GradientButton @click="editTeam(team)" variant="variant">Edit</GradientButton>
+          <GradientButton @click="deleteTeam(team._id)" variant="variant">Delete</GradientButton>
         </div>
       </div>
     </div>
@@ -63,10 +63,10 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">Cancel</button>
-            <button type="submit" class="btn btn-primary">
+            <GradientButton type="button" @click="closeModal" variant="variant">Cancel</GradientButton>
+            <GradientButton type="submit">
               {{ editingTeam ? 'Update Team' : 'Create Team' }}
-            </button>
+            </GradientButton>
           </div>
         </form>
       </div>
@@ -78,6 +78,7 @@
 import { computed, ref } from 'vue';
 import type { Team } from '@/types';
 import { useTeamsStore } from '@/store/teams';
+import GradientButton from '@/components/ui/GradientButton.vue';
 
 const { teams, createTeam, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
 const showCreateModal = ref(false);

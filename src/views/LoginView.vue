@@ -31,9 +31,9 @@
         
         <p v-if="error" class="text-error">{{ error }}</p>
         
-        <button type="submit" class="btn btn-primary" :disabled="loading">
+        <GradientButton type="submit" :disabled="loading">
           {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
-        </button>
+        </GradientButton>
       </form>
       
       <div class="demo-info">
@@ -52,6 +52,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import GradientButton from '@/components/ui/GradientButton.vue';
 
 const router = useRouter();
 

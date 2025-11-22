@@ -3,12 +3,12 @@
     <div class="page-header">
       <h1>Create Feedback Form</h1>
       <div class="header-actions">
-        <button @click="saveFormDraft" class="btn btn-secondary" :disabled="!canSave">
+        <GradientButton @click="saveFormDraft" :disabled="!canSave" variant="variant">
           Save
-        </button>
-        <button @click="saveAndSendForm" class="btn btn-primary" :disabled="!canSend">
-          Save & Send Form
-        </button>
+        </GradientButton>
+        <GradientButton @click="saveAndSendForm" :disabled="!canSend">
+          Save &amp; Send Form
+        </GradientButton>
       </div>
     </div>
 
@@ -45,7 +45,7 @@
       <div class="builder-section card">
         <div class="section-header">
           <h2>Questions</h2>
-          <button @click="addQuestion" class="btn btn-secondary">+ Add Question</button>
+          <GradientButton @click="addQuestion" variant="variant">+ Add Question</GradientButton>
         </div>
 
         <div v-if="form.questions.length === 0" class="empty-questions">
@@ -112,27 +112,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import type { FeedbackFormDraft, FeedbackQuestion, Team } from '@/types';
+import type { FeedbackFormDraft, FeedbackQuestion } from '@/types';
 import { useFormsStore } from '@/store/forms';
+import { useTeamsStore } from '@/store/teams';
+import GradientButton from '@/components/ui/GradientButton.vue';
 
 const router = useRouter();
 const formsStore = useFormsStore();
-
-// Mock teams data (in production, fetch from backend OrgGraph)
-const availableTeams = ref<Team[]>([
-  {
-    _id: 'team1',
-    name: 'Engineering Team',
-    members: ['emp1', 'emp2', 'emp3']
-  },
-  {
-    _id: 'team2',
-    name: 'Product Team',
-    members: ['emp4', 'emp5']
-  }
-]);
+const { teams: availableTeams } = useTeamsStore();
 
 interface QuestionWithOptions extends FeedbackQuestion {
   options?: string[];
