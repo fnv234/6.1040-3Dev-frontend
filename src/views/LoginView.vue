@@ -1,48 +1,56 @@
 <template>
-  <div class="login-container">
-    <div class="login-card card">
-      <h1>360 Feedback Admin</h1>
-      <p class="text-secondary">HR Administration Portal</p>
-      
-      <form @submit.prevent="handleSubmit" class="login-form">
-        <div class="form-group">
-          <label class="label" for="email">Email</label>
-          <input
-            id="email"
-            v-model="email"
-            type="email"
-            class="input"
-            placeholder="admin@company.com"
-            required
-          />
+  <div class="login-page">
+    <div class="login-shader-bg">
+      <ShaderAnimation playOnce />
+    </div>
+
+    <div class="login-overlay">
+      <div class="login-card card">
+        <h1>360 Feedback Admin</h1>
+        <p class="text-secondary">HR Administration Portal</p>
+        
+        <form @submit.prevent="handleSubmit" class="login-form">
+          <div class="form-group">
+            <label class="label" for="email">Email</label>
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              class="input"
+              placeholder="admin@company.com"
+              required
+            />
+          </div>
+          
+          <div class="form-group">
+            <label class="label" for="password">Password</label>
+            <input
+              id="password"
+              v-model="password"
+              type="password"
+              class="input"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          
+          <p v-if="error" class="text-error">{{ error }}</p>
+          
+          <GradientButton type="submit" :disabled="loading">
+            {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
+          </GradientButton>
+        </form>
+        
+        <div class="demo-info">
+          <p class="text-secondary">
+            <small>
+              {{ mode === 'login' ? 'Need an account?' : 'Already have an account?' }}
+              <button type="button" class="link-button" @click="toggleMode">
+                {{ mode === 'login' ? 'Create one here' : 'Log in instead' }}
+              </button>
+            </small>
+          </p>
         </div>
-        
-        <div class="form-group">
-          <label class="label" for="password">Password</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            class="input"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-        
-        <p v-if="error" class="text-error">{{ error }}</p>
-        
-        <GradientButton type="submit" :disabled="loading">
-          {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
-        </GradientButton>
-      </form>
-      
-      <div class="demo-info">
-        <p class="text-secondary"><small>
-          {{ mode === 'login' ? 'Need an account?' : 'Already have an account?' }}
-          <button type="button" class="link-button" @click="toggleMode">
-            {{ mode === 'login' ? 'Create one here' : 'Log in instead' }}
-          </button>
-        </small></p>
       </div>
     </div>
   </div>
@@ -53,6 +61,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import GradientButton from '@/components/ui/GradientButton.vue';
+import ShaderAnimation from '@/components/ui/ShaderAnimation.vue';
 
 const router = useRouter();
 
@@ -92,7 +101,21 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.login-container {
+.login-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.login-shader-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.login-overlay {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -104,6 +127,22 @@ const handleSubmit = async () => {
   width: 100%;
   max-width: 420px;
   text-align: center;
+  background: rgba(43, 42, 42, 0.92);
+  border-radius: 12px;
+  padding: 2.5rem;
+  opacity: 0;
+  animation: loginFadeIn 0.9s ease-out forwards;
+}
+
+@keyframes loginFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-card h1 {
