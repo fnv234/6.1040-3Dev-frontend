@@ -16,7 +16,7 @@ export default defineConfig({
         target: 'https://six-1040-3dev-backend.onrender.com',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        // rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   }
