@@ -54,7 +54,7 @@ const router = createRouter({
 
 // Simple auth guard (expand with real token validation)
 router.beforeEach((to, _from, next) => {
-  const isAuthenticated = localStorage.getItem('hrAdminToken');
+  const isAuthenticated = localStorage.getItem('hrCurrentAdmin');
   
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
