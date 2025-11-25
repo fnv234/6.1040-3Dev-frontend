@@ -131,10 +131,6 @@ export const orgGraph = {
 
   getAllTeams() {
     return http.post<API.GetAllTeamsResponse>('/org-graph/get-all-teams');
-  },
-
-  getEmployee(data: API.GetEmployeeRequest) {
-    return http.post<API.GetEmployeeResponse>('/org-graph/getEmployee', data);
   }
 };
 

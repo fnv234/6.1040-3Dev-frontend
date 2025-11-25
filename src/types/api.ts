@@ -147,6 +147,11 @@ export interface GetAllEmployeesResponse {
   employees: string[];
 }
 
+export interface OrgTeam {
+  _id: string;
+  name: string;
+}
+
 export interface GetAllTeamsResponse {
   teams: OrgTeam[];
 }
@@ -293,26 +298,4 @@ export interface GetReportsByTargetRequest {
 
 export interface ApiError {
   error: string;
-}
-
-
-export interface GetEmployeeRequest {
-  employee: string;
-}
-
-export interface EmployeeData {
-  _id: string;
-  email: string;
-  manager?: string;
-}
-
-export interface GetEmployeeResponse {
-  employeeData: EmployeeData;
-}
-
-// Also update the GetAllTeamsResponse to include members:
-export interface OrgTeam {
-  _id: string;
-  name: string;
-  members: string[];
 }
