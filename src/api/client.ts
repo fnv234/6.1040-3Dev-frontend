@@ -2,15 +2,14 @@ import axios, { type AxiosInstance } from 'axios';
 import type * as API from '@/types/api';
 
 // In development, we use the Vite proxy to avoid CORS issues
-// The proxy is configured in vite.config.ts to forward /api/* to localhost:8000
+// The proxy is configured in vite.config.ts to forward /api/* to the backend
 const apiBaseUrl = import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api';
 
 const http: AxiosInstance = axios.create({
   baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json'
-  },
-  withCredentials: true // Include credentials (cookies) with requests
+  }
 });
 
 // Request interceptor
