@@ -49,47 +49,60 @@
 
     <!-- View Form Modal -->
     <div v-if="viewingForm" class="modal-overlay" @click.self="closeModal">
-      <div class="modal card">
+      <div class="modal card" :class="{ 'wider': showFeedbackForm }">
         <div class="modal-header">
           <h2>{{ viewingForm.name || 'Untitled Form' }}</h2>
           <button @click="closeModal" class="btn-icon" title="Close">×</button>
         </div>
         
-        <p class="text-secondary modal-description">{{ viewingForm.questions.length }} question(s) for team feedback</p>
-        
-        <div class="modal-details">
-          <div class="detail-item">
-            <span class="detail-label">Status:</span>
-            <span v-if="viewingForm.status === 'Sent'" class="badge badge-sent">Sent</span>
-            <span v-else class="badge badge-draft">Draft</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Created:</span>
-            <span class="detail-value">{{ formatDate(viewingForm.createdDate) }}</span>
-          </div>
-          <div v-if="viewingForm.completedDate" class="detail-item">
-            <span class="detail-label">Completed:</span>
-            <span class="detail-value">{{ formatDate(viewingForm.completedDate) }}</span>
-          </div>
-        </div>
-
-        <div class="questions-section">
-          <h3>Questions ({{ viewingForm.questions.length }})</h3>
-          <div class="questions-list">
-            <div v-for="(question, idx) in viewingForm.questions" :key="idx" class="question-item">
-              <p class="question-text">
-                <strong>{{ idx + 1 }}. {{ question.prompt }}</strong>
-              </p>
-              <p class="question-type text-secondary">
-                <small>Type: {{ question.type }}</small>
-              </p>
+        <!-- Form Details View -->
+        <div v-if="!showFeedbackForm">
+          <p class="text-secondary modal-description">{{ viewingForm.questions.length }} question(s) for team feedback</p>
+          
+          <div class="modal-details">
+            <div class="detail-item">
+              <span class="detail-label">Status:</span>
+              <span v-if="viewingForm.status === 'Sent'" class="badge badge-sent">Sent</span>
+              <span v-else class="badge badge-draft">Draft</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Created:</span>
+              <span class="detail-value">{{ formatDate(viewingForm.createdDate) }}</span>
+            </div>
+            <div v-if="viewingForm.completedDate" class="detail-item">
+              <span class="detail-label">Completed:</span>
+              <span class="detail-value">{{ formatDate(viewingForm.completedDate) }}</span>
             </div>
           </div>
+
+          <div class="questions-section">
+            <h3>Questions ({{ viewingForm.questions.length }})</h3>
+            <div class="questions-list">
+              <div v-for="(question, idx) in viewingForm.questions" :key="idx" class="question-item">
+                <p class="question-text">
+                  <strong>{{ idx + 1 }}. {{ question.prompt }}</strong>
+                </p>
+                <p class="question-type text-secondary">
+                  <small>Type: {{ question.type }}</small>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button @click="closeModal" class="btn btn-secondary">Close</button>
+            <button v-if="viewingForm.status === 'Created'" @click="sendFormFromModal" class="btn btn-primary">Send Form</button>
+            <button v-else @click="showFeedbackForm = true" class="btn btn-primary">Fill Out Form</button>
+          </div>
         </div>
 
-        <div class="modal-actions">
-          <button @click="closeModal" class="btn btn-secondary">Close</button>
-          <button v-if="viewingForm.status === 'Created'" @click="sendFormFromModal" class="btn btn-primary">Send Form</button>
+        <!-- Feedback Form View -->
+        <div v-else class="feedback-form-container">
+          <FeedbackForm 
+            :questions="viewingForm.questions"
+            @submit="handleFeedbackSubmit"
+            @cancel="showFeedbackForm = false"
+          />
         </div>
       </div>
     </div>
@@ -98,13 +111,16 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { FeedbackFormDraft } from '@/types';
+import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import { useFormsStore } from '@/store/forms';
+import { emailService } from '@/services/emailService';
+import { orgGraph } from '@/api/client';
 
 const formsStore = useFormsStore();
 
 const { forms } = formsStore;
-const viewingForm = ref<FeedbackFormDraft | null>(null);
+const viewingForm = ref<any | null>(null);
+const showFeedbackForm = ref(false);
 
 const sortedForms = computed(() => {
   return [...forms.value].sort((a, b) => {
@@ -120,12 +136,26 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const viewForm = (form: FeedbackFormDraft) => {
+const viewForm = (form: any) => {
   viewingForm.value = form;
+  showFeedbackForm.value = false;
 };
 
 const closeModal = () => {
   viewingForm.value = null;
+  showFeedbackForm.value = false;
+};
+
+const handleFeedbackSubmit = async (feedbackData: any) => {
+  try {
+    // Here you would typically submit the feedback to your backend
+    console.log('Feedback submitted:', feedbackData);
+    alert('Feedback submitted successfully!');
+    closeModal();
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    alert('Failed to submit feedback. Please try again.');
+  }
 };
 
 const deleteForm = (formId: string) => {
@@ -134,16 +164,75 @@ const deleteForm = (formId: string) => {
   }
 };
 
-const sendForm = (formId: string) => {
-  if (confirm('Are you sure you want to send this form to the team?')) {
-    formsStore.sendForm(formId);
-    alert('Form sent successfully!');
+const sendForm = async (formId: string) => {
+  try {
+    const form = forms.value.find(f => f._id === formId);
+    if (!form) {
+      alert('Form not found');
+      return;
+    }
+
+    // Get team members if teamId exists
+    let employeeEmails: string[] = [];
+    if (form.teamId) {
+      try {
+        // Since the API doesn't return team members, we'll need to handle this differently
+        // For now, let's get all employees and you can filter by team later
+        const employeesResponse = await orgGraph.getAllEmployees();
+        const allEmployeeIds = employeesResponse.data.employees;
+        
+        // TODO: Filter employees by team when backend supports it
+        // For now, we'll get emails for all employees (you may want to limit this)
+        const emailMap = await emailService.getEmployeeEmails(allEmployeeIds.slice(0, 10)); // Limit to first 10 for testing
+        employeeEmails = Object.values(emailMap);
+        
+        if (employeeEmails.length === 0) {
+          alert('No employee emails found. Please ensure employees have email addresses.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching employee emails:', error);
+        alert('Failed to fetch employee emails. Please try again.');
+        return;
+      }
+    } else {
+      alert('No team assigned to this form. Please assign a team first.');
+      return;
+    }
+
+    if (employeeEmails.length === 0) {
+      alert('No team members found with valid emails.');
+      return;
+    }
+
+    // Send emails
+    const emailData = {
+      to: employeeEmails,
+      subject: `Feedback Request: ${form.name}`,
+      formId: form._id!,
+      formName: form.name,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+    };
+
+    const result = await emailService.sendFeedbackForm(emailData);
+    
+    if (result.success) {
+      alert(`Successfully sent ${result.emailsSent} email(s) to team members.`);
+      
+      // Update form status to 'Sent' using the store's sendForm method
+      formsStore.sendForm(formId);
+    } else {
+      alert(`Failed to send some emails. Sent: ${result.emailsSent}, Failed: ${result.failedEmails?.length || 0}`);
+    }
+  } catch (error: any) {
+    console.error('Error sending form:', error);
+    alert(error.message || 'Failed to send form. Please try again.');
   }
 };
 
-const sendFormFromModal = () => {
+const sendFormFromModal = async () => {
   if (viewingForm.value && viewingForm.value._id) {
-    sendForm(viewingForm.value._id);
+    await sendForm(viewingForm.value._id);
     closeModal();
   }
 };
@@ -382,5 +471,16 @@ const sendFormFromModal = () => {
   justify-content: flex-end;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
+}
+
+.wider {
+  max-width: 800px;
+  width: 90%;
+}
+
+.feedback-form-container {
+  padding: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>

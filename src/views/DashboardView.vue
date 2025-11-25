@@ -96,8 +96,8 @@ const loading = ref(true);
 
 const teamStats = computed<TeamStatistics[]>(() => {
   return teams.value.map(team => {
-    const totalResponses = team.members.length; // placeholder: 1 response per member
-    const responseRate = team.members.length > 0 ? 80 : 0; // placeholder value
+    const totalResponses = 0; // No responses until actual data is available
+    const responseRate = 0; // 0% response rate until actual data is available
 
     return {
       teamId: team._id,
@@ -163,6 +163,9 @@ const regenerateSummary = async (teamId: string) => {
 
 .stat-card {
   text-align: center;
+  background: rgba(50, 45, 32, 0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(103, 88, 74, 0.5);
 }
 
 .stat-card h3 {
@@ -189,6 +192,9 @@ const regenerateSummary = async (teamId: string) => {
 .empty-state {
   text-align: center;
   padding: 3rem;
+  background: rgba(50, 45, 32, 0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(103, 88, 74, 0.5);
 }
 
 .empty-state .btn {
@@ -203,6 +209,9 @@ const regenerateSummary = async (teamId: string) => {
 
 .team-card {
   padding: 1.5rem;
+  background: rgba(50, 45, 32, 0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(103, 88, 74, 0.5);
 }
 
 .team-header {
@@ -247,7 +256,7 @@ const regenerateSummary = async (teamId: string) => {
 .sentiment-summary {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(103, 88, 74, 0.5);
 }
 
 .sentiment-summary h4 {
@@ -275,12 +284,16 @@ const regenerateSummary = async (teamId: string) => {
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: rgba(50, 45, 32, 0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(103, 88, 74, 0.5);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .action-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  border-color: rgba(126, 162, 170, 0.7);
 }
 
 .action-card h3 {

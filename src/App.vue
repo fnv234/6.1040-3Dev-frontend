@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <nav v-if="isAuthenticated" class="navbar">
+    <nav v-if="showNavbar" class="navbar">
       <div class="navbar-content">
         <router-link to="/dashboard" class="navbar-title-link">
           <h1 class="navbar-title">360 Feedback Admin</h1>
@@ -20,14 +20,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth';
 import GradientButton from '@/components/ui/GradientButton.vue';
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const isAuthenticated = computed(() => auth.isAuthenticated.value)
+
+const showNavbar = computed(() => isAuthenticated.value && route.name !== 'Login')
 
 const handleLogout = () => {
   auth.logout()
@@ -37,7 +40,7 @@ const handleLogout = () => {
 
 <style scoped>
 .navbar {
-  background: var(--bg);
+  background: rgba(9, 90, 128, 0.95);
   border-bottom: 1px solid var(--border);
   padding: 1rem 0;
   margin-bottom: 2rem;

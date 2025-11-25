@@ -1,15 +1,62 @@
 import axios, { type AxiosInstance } from 'axios';
 import type * as API from '@/types/api';
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://six-1040-3dev-backend.onrender.com';
-const apiBaseUrl = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+// In development, we use the Vite proxy to avoid CORS issues
+// The proxy is configured in vite.config.ts to forward /api/* to the backend
+const apiBaseUrl = import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api';
 
 const http: AxiosInstance = axios.create({
   baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Include credentials (cookies) with requests
 });
+
+// Request interceptor
+http.interceptors.request.use(
+  (config) => {
+    console.log('Request:', {
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers
+    });
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+http.interceptors.response.use(
+  (response) => {
+    console.log('Response:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      console.error('Response error:', {
+        url: error.config?.url,
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Request setup error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // FeedbackForm endpoints
 export const feedbackForm = {
@@ -41,35 +88,35 @@ export const feedbackForm = {
 // OrgGraph endpoints
 export const orgGraph = {
   importRoster(data: API.ImportRosterRequest) {
-    return http.post<void>('/OrgGraph/importRoster', data);
+    return http.post<void>('/org-graph/import-roster', data);
   },
 
   updateManager(data: API.UpdateManagerRequest) {
-    return http.post<void>('/OrgGraph/updateManager', data);
+    return http.post<void>('/org-graph/update-manager', data);
   },
 
   updateTeam(data: API.UpdateTeamRequest) {
-    return http.post<void>('/OrgGraph/updateTeam', data);
+    return http.post<void>('/org-graph/update-team', data);
   },
 
   getManager(data: API.GetManagerRequest) {
-    return http.post<API.GetManagerResponse>('/OrgGraph/getManager', data);
+    return http.post<API.GetManagerResponse>('/org-graph/get-manager', data);
   },
 
   getDirectReports(data: API.GetDirectReportsRequest) {
-    return http.post<API.GetDirectReportsResponse>('/OrgGraph/getDirectReports', data);
+    return http.post<API.GetDirectReportsResponse>('/org-graph/get-direct-reports', data);
   },
 
   getPeers(data: API.GetPeersRequest) {
-    return http.post<API.GetPeersResponse>('/OrgGraph/getPeers', data);
+    return http.post<API.GetPeersResponse>('/org-graph/get-peers', data);
   },
 
   getAllEmployees() {
-    return http.post<API.GetAllEmployeesResponse>('/OrgGraph/getAllEmployees');
+    return http.post<API.GetAllEmployeesResponse>('/org-graph/get-all-employees');
   },
 
   getAllTeams() {
-    return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams');
+    return http.post<API.GetAllTeamsResponse>('/org-graph/get-all-teams');
   }
 };
 
@@ -145,3 +192,5 @@ export default {
   reviewCycle,
   reportSynthesis
 };
+
+export { http };

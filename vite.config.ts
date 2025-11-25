@@ -11,6 +11,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    historyApiFallback: true
+    proxy: {
+      '/api': {
+        target: 'https://six-1040-3dev-backend.onrender.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   }
 });

@@ -4,7 +4,6 @@ import DashboardView from '@/views/DashboardView.vue';
 import TeamsView from '@/views/TeamsView.vue';
 import FormBuilderView from '@/views/FormBuilderView.vue';
 import MyFormsView from '@/views/MyFormsView.vue';
-import AnimationView from '@/views/AnimationView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -40,12 +39,7 @@ const routes: RouteRecordRaw[] = [
     component: FormBuilderView,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/animation',
-    name: 'Animation',
-    component: AnimationView,
-    meta: { requiresAuth: true }
-  },
+
   // Gradient button demo route removed (component no longer exists)
   {
     path: '/:pathMatch(.*)*',

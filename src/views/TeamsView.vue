@@ -5,6 +5,24 @@
       <GradientButton @click="showCreateModal = true">+ Create Team</GradientButton>
     </div>
 
+    <div class="org-upload card">
+      <h2>Upload Org Chart</h2>
+      <p class="text-secondary">
+        Upload a JSON file with your employee roster to let OrgGraph infer team hierarchies.
+        Expected format:
+        <code>{ "employees": [{ "id": "emp001", "manager": "mgr001", "teamName": "Engineering" }, ...] }</code>
+      </p>
+      <div class="org-upload-controls">
+        <input type="file" accept="application/json" @change="onOrgFileSelected" />
+        <GradientButton :disabled="!orgFile || orgUploading" @click="importOrgChart">
+          {{ orgUploading ? 'Importing…' : 'Import Org Chart' }}
+        </GradientButton>
+      </div>
+      <p v-if="orgStatus" class="org-status" :class="{ 'org-status-error': orgStatusType === 'error', 'org-status-success': orgStatusType === 'success' }">
+        {{ orgStatus }}
+      </p>
+    </div>
+
     <div v-if="teams.length === 0" class="empty-state card">
       <h3>No teams yet</h3>
       <p class="text-secondary">Create your first team to start sending feedback forms</p>
@@ -79,6 +97,7 @@ import { computed, ref } from 'vue';
 import type { Team } from '@/types';
 import { useTeamsStore } from '@/store/teams';
 import GradientButton from '@/components/ui/GradientButton.vue';
+import { orgGraph } from '@/api/client';
 
 const { teams, createTeam, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
 const showCreateModal = ref(false);
@@ -98,6 +117,93 @@ const memberIdsText = computed({
       .filter(id => id.length > 0);
   }
 });
+
+const orgFile = ref<File | null>(null);
+const orgUploading = ref(false);
+const orgStatus = ref('');
+const orgStatusType = ref<'success' | 'error' | ''>('');
+
+const onOrgFileSelected = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0] || null;
+  orgFile.value = file;
+  orgStatus.value = '';
+  orgStatusType.value = '';
+};
+
+const importOrgChart = () => {
+  if (!orgFile.value) return;
+  orgUploading.value = true;
+  orgStatus.value = '';
+  orgStatusType.value = '';
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const text = reader.result as string;
+      const parsed = JSON.parse(text);
+      if (!parsed || !Array.isArray(parsed.employees)) {
+        throw new Error('Invalid file format: expected { "employees": [...] }');
+      }
+      // Transform the data to match the backend's expected format
+      const transformedEmployees = parsed.employees.map(emp => ({
+        id: emp.id,
+        email: emp.email || `${emp.id}@example.com`, // Default email if not provided
+        manager: emp.manager,
+        teamNames: emp.teamName ? [emp.teamName] : [] // Convert teamName to teamNames array
+      }));
+      
+      const response = await orgGraph.importRoster({ 
+        sourceData: { 
+          employees: transformedEmployees 
+        } 
+      });
+      console.log('Import response:', response);
+      orgStatus.value = 'Org chart imported successfully.';
+      orgStatusType.value = 'success';
+    } catch (e: any) {
+      console.error('Error importing org chart:', e);
+      if (e.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Full error response:', e.response);
+        console.error('Request config:', e.config);
+      
+        // Try to get more detailed error message
+        let errorMessage = 'Failed to import org chart';
+        if (e.response?.data) {
+          if (typeof e.response.data === 'string') {
+            errorMessage = e.response.data;
+          } else if (e.response.data.message) {
+            errorMessage = e.response.data.message;
+          } else if (e.response.data.error) {
+            errorMessage = e.response.data.error;
+          } else {
+            errorMessage = JSON.stringify(e.response.data);
+          }
+        }
+        orgStatus.value = `Error ${e.response.status}: ${errorMessage}`;
+      } else if (e.request) {
+        // The request was made but no response was received
+        console.error('No response received:', e.request);
+        orgStatus.value = 'No response from server. Please try again.';
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error setting up request:', e.message);
+        orgStatus.value = e.message || 'Failed to import org chart.';
+      }
+      orgStatusType.value = 'error';
+    } finally {
+      orgUploading.value = false;
+    }
+  };
+  reader.onerror = () => {
+    orgUploading.value = false;
+    orgStatus.value = 'Could not read file.';
+    orgStatusType.value = 'error';
+  };
+  reader.readAsText(orgFile.value);
+};
 
 const closeModal = () => {
   showCreateModal.value = false;
@@ -142,6 +248,35 @@ const deleteTeam = (teamId: string) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+}
+
+.org-upload {
+  margin-bottom: 2rem;
+}
+
+.org-upload h2 {
+  margin-bottom: 0.5rem;
+}
+
+.org-upload-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.org-status {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.org-status-success {
+  color: var(--success);
+}
+
+.org-status-error {
+  color: var(--error);
 }
 
 .page-header h1 {

@@ -164,6 +164,12 @@ const saveFormDraft = () => {
       prompt: q.prompt,
       type: q.type
     };
+    
+    // Add options for Multiple Choice questions
+    if (q.type === 'Multiple Choice' && q.optionsDisplay) {
+      (question as any).options = q.optionsDisplay.split(',').map((opt: string) => opt.trim());
+    }
+    
     return question;
   });
 
@@ -193,6 +199,12 @@ const saveAndSendForm = async () => {
       prompt: q.prompt,
       type: q.type
     };
+    
+    // Add options for Multiple Choice questions
+    if (q.type === 'Multiple Choice' && q.optionsDisplay) {
+      (question as any).options = q.optionsDisplay.split(',').map((opt: string) => opt.trim());
+    }
+    
     return question;
   });
 
