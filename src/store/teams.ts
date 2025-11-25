@@ -6,7 +6,7 @@ const teams = ref<Team[]>([]);
 
 export function useTeamsStore() {
   const auth = useAuthStore();
-  const currentAdminId = computed(() => auth.currentAdmin.value?.id);
+  const currentAdminId = computed(() => auth.currentAdmin.value?._id);
 
   const storageKey = computed(() => {
     if (currentAdminId.value) {

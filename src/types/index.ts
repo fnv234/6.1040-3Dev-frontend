@@ -1,9 +1,8 @@
 // Domain models for HR Feedback Admin
 
 export interface HRAdmin {
-  id: string;
+  _id: string;
   email: string;
-  displayName: string;
 }
 
 export interface Team {

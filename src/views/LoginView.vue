@@ -85,15 +85,15 @@ const handleSubmit = async () => {
   
   try {
     if (mode.value === 'signup') {
-      auth.register(email.value, password.value);
-      auth.login(email.value, password.value);
+      // Register creates the account and automatically logs in
+      await auth.register(email.value, password.value);
     } else {
-      auth.login(email.value, password.value);
+      await auth.login(email.value, password.value);
     }
 
     router.push('/dashboard');
   } catch (e: any) {
-    error.value = e.message || 'Login failed. Please try again.';
+    error.value = e.message || 'A login error occurred. Please try again.';
   } finally {
     loading.value = false;
   }

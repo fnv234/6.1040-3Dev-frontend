@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from 'axios';
 import type * as API from '@/types/api';
 
 // In development, we use the Vite proxy to avoid CORS issues
-// The proxy is configured in vite.config.ts to forward /api/* to the backend
+// The proxy is configured in vite.config.ts to forward /api/* to localhost:8000
 const apiBaseUrl = import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api';
 
 const http: AxiosInstance = axios.create({
@@ -57,6 +57,21 @@ http.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// HRAdmin endpoints
+export const hrAdmin = {
+  registerHRAdmin(data: API.RegisterHRAdminRequest) {
+    return http.post<API.RegisterHRAdminResponse>('/HRAdmin/registerHRAdmin', data);
+  },
+
+  authenticateHRAdmin(data: API.AuthenticateHRAdminRequest) {
+    return http.post<API.AuthenticateHRAdminResponse>('/HRAdmin/authenticateHRAdmin', data);
+  },
+
+  getHRAdmin(data: API.GetHRAdminRequest) {
+    return http.post<API.GetHRAdminResponse>('/HRAdmin/getHRAdmin', data);
+  }
+};
 
 // FeedbackForm endpoints
 export const feedbackForm = {
@@ -187,6 +202,7 @@ export const reportSynthesis = {
 };
 
 export default {
+  hrAdmin,
   feedbackForm,
   orgGraph,
   reviewCycle,

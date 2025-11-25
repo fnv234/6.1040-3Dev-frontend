@@ -1,5 +1,38 @@
 // API request/response types matching backend spec
 
+// HRAdmin
+
+export interface RegisterHRAdminRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterHRAdminResponse {
+  hrAdmin: string;
+}
+
+export interface AuthenticateHRAdminRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthenticateHRAdminResponse {
+  hrAdmin: string;
+}
+
+export interface GetHRAdminRequest {
+  hrAdminId: string;
+}
+
+export interface HRAdminData {
+  _id: string;
+  email: string;
+}
+
+export interface GetHRAdminResponse {
+  hrAdminData: HRAdminData;
+}
+
 export type QuestionType = 'Free' | 'Scale' | 'Multiple Choice';
 
 export interface FeedbackQuestion {
