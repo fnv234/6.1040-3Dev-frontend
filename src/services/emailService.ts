@@ -1,4 +1,4 @@
-import { http } from '@/api/client';
+import { http, feedbackForm } from '@/api/client';
 
 export interface EmailData {
   to: string[];
@@ -89,24 +89,24 @@ export const emailService = {
       const failedEmails: string[] = [];
 
       // Get employee emails
-      const employeeEmails = await this.getEmployeeEmails(team.members);
+      const employeeEmails = await this.getEmployeeEmails(emailData.to);
 
       // Create a feedback form for each team member to review each other team member
-      for (const reviewerId of team.members) {
-        const reviewerEmail = employeeEmails[reviewerId];
-        if (!reviewerEmail) {
+      for (const reviewerEmail of emailData.to) {
+        const reviewerId = reviewerEmail; // Using email as ID for now, adjust if you have a different ID system
+        if (!employeeEmails[reviewerId]) {
           console.warn(`No email found for reviewer ${reviewerId}`);
           failedEmails.push(reviewerId);
           continue;
         }
 
-        for (const targetId of team.members) {
+        for (const targetId of emailData.to) {
           // Skip self-reviews
           if (reviewerId === targetId) continue;
 
           try {
             // Get the original form to copy questions
-            const originalFormResponse = await feedbackForm.getFeedbackForm({ id: formId });
+            const originalFormResponse = await feedbackForm.getFeedbackForm({ id: emailData.formId });
             const originalForm = originalFormResponse.data.feedbackForm;
 
             // Create a new feedback form instance for this reviewer-target pair
@@ -124,19 +124,19 @@ export const emailService = {
             });
 
             // Generate the form link
-            const formLink = generateFormLink(newFormId, reviewerId);
+            const formLink = this.generateFormLink(emailData.formId, reviewerId);
 
             // Get target employee info for email context
-            const targetEmail = employeeEmails[targetId];
-            const targetName = targetEmail ? targetEmail.split('@')[0] : targetId;
+            // const targetEmail = employeeEmails[targetId];
+            // const targetName = targetEmail ? targetEmail.split('@')[0] : targetId;
 
             // Send the actual email
             const emailSent = await sendEmailViaBackend({
               to: reviewerEmail,
-              subject: `Feedback Request: Please Review ${targetName}`,
+              subject: `Feedback Request: ${emailData.formName} - Review for ${employeeEmails[targetId] || targetId}`,
               body: `
-                <p>Hello,</p>
-                <p>You've been asked to provide feedback for ${targetName} as part of our 360-degree feedback process.</p>
+                <p>Hello ${employeeEmails[reviewerId] || reviewerId},</p>
+                <p>You have been requested to provide feedback for ${employeeEmails[targetId] || targetId} as part of the ${emailData.formName} process.</p>
                 <p>This feedback will help them grow and improve. Your honest and constructive feedback is valuable.</p>
                 <p>Please click the link below to complete the feedback form:</p>
               `,
