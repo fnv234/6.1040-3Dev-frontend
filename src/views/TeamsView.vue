@@ -146,7 +146,7 @@ const importOrgChart = () => {
         throw new Error('Invalid file format: expected { "employees": [...] }');
       }
       // Transform the data to match the backend's expected format
-      const transformedEmployees = parsed.employees.map(emp => ({
+      const transformedEmployees = parsed.employees.map((emp: { id: string; email?: string; manager?: string; teamName?: string }) => ({
         id: emp.id,
         email: emp.email || `${emp.id}@example.com`, // Default email if not provided
         manager: emp.manager,
