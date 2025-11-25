@@ -1,12 +1,12 @@
-import { http } from '@/api/client';
+// src/services/emailService.ts
+import { feedbackForm, orgGraph } from '@/api/client';
+import type { Team } from '@/types';
 
 export interface EmailData {
   to: string[];
   subject: string;
   formId: string;
-  formName: string;
   teamName?: string;
-  dueDate?: string;
 }
 
 export interface SendEmailResponse {
@@ -18,15 +18,58 @@ export interface SendEmailResponse {
 
 export const emailService = {
   /**
-   * Send feedback form emails to team members
+   * Send feedback form to team members
    */
-  async sendFeedbackForm(emailData: EmailData): Promise<SendEmailResponse> {
+  async sendFeedbackFormToTeam(
+    formId: string,
+    team: Team,
+  ): Promise<SendEmailResponse> {
     try {
-      const response = await http.post<SendEmailResponse>('/email/send-feedback-form', emailData);
-      return response.data;
+      let emailsSent = 0;
+      const failedEmails: string[] = [];
+
+      // Create a feedback form for each team member to review each other team member
+      for (const reviewerId of team.members) {
+        for (const targetId of team.members) {
+          // Skip self-reviews
+          if (reviewerId === targetId) continue;
+
+          try {
+            // Get the original form to copy questions
+            const originalFormResponse = await feedbackForm.getFeedbackForm({ id: formId });
+            const originalForm = originalFormResponse.data.feedbackForm;
+
+            // Create a new feedback form instance for this reviewer-target pair
+            const createResponse = await feedbackForm.createFeedbackForm({
+              reviewer: reviewerId,
+              target: targetId,
+              questions: originalForm.questions
+            });
+
+            const newFormId = createResponse.data.feedbackForm;
+
+            // Send the form (marks it as "Sent")
+            await feedbackForm.sendFeedbackForm({
+              feedbackForm: newFormId
+            });
+
+            emailsSent++;
+          } catch (error) {
+            console.error(`Failed to create form for reviewer ${reviewerId} -> target ${targetId}:`, error);
+            failedEmails.push(reviewerId);
+          }
+        }
+      }
+
+      return {
+        success: emailsSent > 0,
+        emailsSent,
+        failedEmails: failedEmails.length > 0 ? failedEmails : undefined,
+        message: `Successfully created ${emailsSent} feedback forms for team members`
+      };
     } catch (error: any) {
-      console.error('Error sending feedback form emails:', error);
-      throw new Error(error.response?.data?.message || 'Failed to send emails');
+      console.error('Error sending feedback forms:', error);
+      throw new Error(error.response?.data?.message || 'Failed to send feedback forms');
     }
   },
 
@@ -35,10 +78,21 @@ export const emailService = {
    */
   async getEmployeeEmails(employeeIds: string[]): Promise<Record<string, string>> {
     try {
-      const response = await http.post<Record<string, string>>('/org-graph/get-employee-emails', {
-        employeeIds
-      });
-      return response.data;
+      const emailMap: Record<string, string> = {};
+      
+      // Fetch each employee's data to get their email
+      for (const employeeId of employeeIds) {
+        try {
+          const response = await orgGraph.getEmployee({ employee: employeeId });
+          if (response.data.employeeData?.email) {
+            emailMap[employeeId] = response.data.employeeData.email;
+          }
+        } catch (error) {
+          console.warn(`Could not fetch email for employee ${employeeId}`);
+        }
+      }
+
+      return emailMap;
     } catch (error: any) {
       console.error('Error fetching employee emails:', error);
       throw new Error(error.response?.data?.message || 'Failed to fetch employee emails');
@@ -51,47 +105,5 @@ export const emailService = {
   generateFormLink(formId: string, employeeId: string): string {
     const baseUrl = window.location.origin;
     return `${baseUrl}/feedback/${formId}?employee=${employeeId}`;
-  },
-
-  /**
-   * Create email template for feedback form
-   */
-  createEmailTemplate(formName: string, formLink: string, teamName?: string, dueDate?: string): string {
-    return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333; margin-bottom: 20px;">Feedback Request: ${formName}</h2>
-        
-        ${teamName ? `<p style="margin-bottom: 20px;">Team: ${teamName}</p>` : ''}
-        
-        <p style="margin-bottom: 20px;">
-          You have been selected to provide feedback. Please click the link below to complete the feedback form.
-        </p>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${formLink}" 
-             style="background-color: #007bff; color: white; padding: 12px 30px; 
-                    text-decoration: none; border-radius: 5px; display: inline-block;">
-            Complete Feedback Form
-          </a>
-        </div>
-        
-        <p style="color: #666; font-size: 14px; margin-top: 20px;">
-          If the button above doesn't work, you can copy and paste this link into your browser:<br>
-          <a href="${formLink}" style="color: #007bff;">${formLink}</a>
-        </p>
-        
-        ${dueDate ? `
-          <p style="margin-top: 20px; color: #333;">
-            <strong>Please complete this feedback by: ${new Date(dueDate).toLocaleDateString()}</strong>
-          </p>
-        ` : ''}
-        
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-        
-        <p style="color: #666; font-size: 12px;">
-          This is an automated message. Please do not reply to this email.
-        </p>
-      </div>
-    `;
   }
 };

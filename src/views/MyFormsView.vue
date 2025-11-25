@@ -1,132 +1,170 @@
 <template>
   <div class="container">
     <div class="page-header">
-      <h1>My Forms</h1>
-      <router-link to="/forms/new" class="btn btn-primary">+ Create Form</router-link>
+      <div>
+        <h1>My Forms</h1>
+        <p class="page-subtitle">Manage and send feedback forms to your teams</p>
+      </div>
+      <router-link to="/forms/new">
+        <GradientButton>+ Create Form</GradientButton>
+      </router-link>
     </div>
 
     <div v-if="forms.length === 0" class="empty-state card">
+      <div class="empty-icon">📋</div>
       <h3>No forms yet</h3>
       <p class="text-secondary">Create your first feedback form to get started</p>
-      <router-link to="/forms/new" class="btn btn-primary">Create Form</router-link>
+      <router-link to="/forms/new">
+        <GradientButton>Create Form</GradientButton>
+      </router-link>
     </div>
 
-    <div v-else class="forms-list">
+    <div v-else class="forms-grid">
       <div v-for="form in sortedForms" :key="form._id" class="form-card card">
-        <div class="form-header">
-          <div class="form-info">
-            <h3>{{ form.name || 'Untitled Form' }}</h3>
-            <p class="text-secondary">{{ form.questions.length }} question(s) • {{ form.teamId ? 'Team assigned' : 'No team assigned' }}</p>
-          </div>
-          <div class="form-status">
-            <span v-if="form.status === 'Sent'" class="badge badge-sent">Sent</span>
+        <div class="form-card-header">
+          <div class="form-icon">📄</div>
+          <div class="form-status-badge">
+            <span v-if="form.status === 'Sent'" class="badge badge-sent">✓ Sent</span>
+            <span v-else-if="form.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
             <span v-else class="badge badge-draft">Draft</span>
           </div>
         </div>
-
-        <div class="form-details">
-          <div class="detail-item">
-            <span class="detail-label">Questions:</span>
-            <span class="detail-value">{{ form.questions.length }}</span>
+        
+        <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
+        
+        <div class="form-meta">
+          <div class="meta-item">
+            <span class="meta-icon">❓</span>
+            <span>{{ form.questions.length }} questions</span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Created:</span>
-            <span class="detail-value">{{ formatDate(form.createdDate) }}</span>
+          <div class="meta-item">
+            <span class="meta-icon">📅</span>
+            <span>{{ formatDate(form.createdDate) }}</span>
           </div>
-          <div v-if="form.status === 'Sent'" class="detail-item">
-            <span class="detail-label">Status:</span>
-            <span class="detail-value">{{ form.status }}</span>
+          <div v-if="form.teamId" class="meta-item">
+            <span class="meta-icon">👥</span>
+            <span>{{ getTeamName(form.teamId) }}</span>
           </div>
         </div>
 
         <div class="form-actions">
-          <button @click="viewForm(form)" class="btn btn-secondary btn-sm">View</button>
-          <button v-if="form.status === 'Created'" @click="sendForm(form._id!)" class="btn btn-primary btn-sm">Send</button>
-          <button @click="deleteForm(form._id!)" class="btn btn-secondary btn-sm">Delete</button>
+          <button @click="viewForm(form)" class="btn-action btn-view">
+            <span class="btn-icon">👁️</span>
+            View
+          </button>
+          <button v-if="form.status === 'Created'" @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
+            <span class="btn-icon">📤</span>
+            {{ sending ? 'Sending...' : 'Send' }}
+          </button>
+          <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
+            <span class="btn-icon">🗑️</span>
+            Delete
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- View Form Modal -->
-    <div v-if="viewingForm" class="modal-overlay" @click.self="closeModal">
-      <div class="modal card" :class="{ 'wider': showFeedbackForm }">
-        <div class="modal-header">
-          <h2>{{ viewingForm.name || 'Untitled Form' }}</h2>
-          <button @click="closeModal" class="btn-icon" title="Close">×</button>
-        </div>
-        
-        <!-- Form Details View -->
-        <div v-if="!showFeedbackForm">
-          <p class="text-secondary modal-description">{{ viewingForm.questions.length }} question(s) for team feedback</p>
-          
-          <div class="modal-details">
-            <div class="detail-item">
-              <span class="detail-label">Status:</span>
-              <span v-if="viewingForm.status === 'Sent'" class="badge badge-sent">Sent</span>
-              <span v-else class="badge badge-draft">Draft</span>
+    <!-- View/Fill Form Modal -->
+    <transition name="modal">
+      <div v-if="viewingForm" class="modal-overlay" @click.self="closeModal">
+        <div class="modal" :class="{ 'modal-wide': showFeedbackForm }">
+          <div class="modal-header">
+            <div>
+              <h2>{{ viewingForm.name || 'Untitled Form' }}</h2>
+              <p class="modal-subtitle">{{ viewingForm.questions.length }} questions • {{ getTeamName(viewingForm.teamId) }}</p>
             </div>
-            <div class="detail-item">
-              <span class="detail-label">Created:</span>
-              <span class="detail-value">{{ formatDate(viewingForm.createdDate) }}</span>
-            </div>
-            <div v-if="viewingForm.completedDate" class="detail-item">
-              <span class="detail-label">Completed:</span>
-              <span class="detail-value">{{ formatDate(viewingForm.completedDate) }}</span>
-            </div>
+            <button @click="closeModal" class="btn-close" title="Close">
+              <span>✕</span>
+            </button>
           </div>
-
-          <div class="questions-section">
-            <h3>Questions ({{ viewingForm.questions.length }})</h3>
-            <div class="questions-list">
-              <div v-for="(question, idx) in viewingForm.questions" :key="idx" class="question-item">
-                <p class="question-text">
-                  <strong>{{ idx + 1 }}. {{ question.prompt }}</strong>
-                </p>
-                <p class="question-type text-secondary">
-                  <small>Type: {{ question.type }}</small>
-                </p>
+          
+          <!-- Form Preview -->
+          <div v-if="!showFeedbackForm" class="modal-body">
+            <div class="status-bar">
+              <div class="status-item">
+                <span class="status-label">Status:</span>
+                <span v-if="viewingForm.status === 'Sent'" class="badge badge-sent">✓ Sent</span>
+                <span v-else-if="viewingForm.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
+                <span v-else class="badge badge-draft">Draft</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Created:</span>
+                <span>{{ formatDate(viewingForm.createdDate) }}</span>
               </div>
             </div>
+
+            <div class="questions-preview">
+              <h3 class="section-title">Questions Preview</h3>
+              <div class="questions-list">
+                <div v-for="(question, idx) in viewingForm.questions" :key="idx" class="question-preview-item">
+                  <div class="question-preview-header">
+                    <span class="question-number-badge">{{ idx + 1 }}</span>
+                    <span class="question-text">{{ question.prompt }}</span>
+                  </div>
+                  <div class="question-preview-meta">
+                    <span class="type-badge">{{ question.type }}</span>
+                    <span v-if="question.options" class="options-preview">
+                      {{ question.options.length }} options
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button @click="closeModal" class="btn-secondary">Close</button>
+              <button v-if="viewingForm.status === 'Created'" @click="sendFormFromModal" class="btn-primary" :disabled="sending">
+                {{ sending ? 'Sending...' : '📤 Send Form' }}
+              </button>
+              <button v-else @click="showFeedbackForm = true" class="btn-primary">
+                📝 Fill Out Form
+              </button>
+            </div>
           </div>
 
-          <div class="modal-actions">
-            <button @click="closeModal" class="btn btn-secondary">Close</button>
-            <button v-if="viewingForm.status === 'Created'" @click="sendFormFromModal" class="btn btn-primary">Send Form</button>
-            <button v-else @click="showFeedbackForm = true" class="btn btn-primary">Fill Out Form</button>
+          <!-- Feedback Form -->
+          <div v-else class="modal-body">
+            <FeedbackForm 
+              :questions="viewingForm.questions"
+              @submit="handleFeedbackSubmit"
+              @cancel="showFeedbackForm = false"
+            />
           </div>
-        </div>
-
-        <!-- Feedback Form View -->
-        <div v-else class="feedback-form-container">
-          <FeedbackForm 
-            :questions="viewingForm.questions"
-            @submit="handleFeedbackSubmit"
-            @cancel="showFeedbackForm = false"
-          />
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
+import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
+import { useTeamsStore } from '@/store/teams';
 import { emailService } from '@/services/emailService';
-import { orgGraph } from '@/api/client';
 
 const formsStore = useFormsStore();
+const teamsStore = useTeamsStore();
 
 const { forms } = formsStore;
+const { teams } = teamsStore;
+
 const viewingForm = ref<any | null>(null);
 const showFeedbackForm = ref(false);
+const sending = ref(false);
 
 const sortedForms = computed(() => {
   return [...forms.value].sort((a, b) => {
     return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
   });
 });
+
+const getTeamName = (teamId?: string) => {
+  if (!teamId) return 'No team';
+  const team = teams.value.find(t => t._id === teamId);
+  return team?.name || 'Unknown team';
+};
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -148,7 +186,6 @@ const closeModal = () => {
 
 const handleFeedbackSubmit = async (feedbackData: any) => {
   try {
-    // Here you would typically submit the feedback to your backend
     console.log('Feedback submitted:', feedbackData);
     alert('Feedback submitted successfully!');
     closeModal();
@@ -165,68 +202,43 @@ const deleteForm = (formId: string) => {
 };
 
 const sendForm = async (formId: string) => {
-  try {
-    const form = forms.value.find(f => f._id === formId);
-    if (!form) {
-      alert('Form not found');
-      return;
-    }
+  const form = forms.value.find(f => f._id === formId);
+  if (!form || !form.teamId) {
+    alert('Cannot send form: No team assigned');
+    return;
+  }
 
-    // Get team members if teamId exists
-    let employeeEmails: string[] = [];
-    if (form.teamId) {
-      try {
-        // Since the API doesn't return team members, we'll need to handle this differently
-        // For now, let's get all employees and you can filter by team later
-        const employeesResponse = await orgGraph.getAllEmployees();
-        const allEmployeeIds = employeesResponse.data.employees;
-        
-        // TODO: Filter employees by team when backend supports it
-        // For now, we'll get emails for all employees (you may want to limit this)
-        const emailMap = await emailService.getEmployeeEmails(allEmployeeIds.slice(0, 10)); // Limit to first 10 for testing
-        employeeEmails = Object.values(emailMap);
-        
-        if (employeeEmails.length === 0) {
-          alert('No employee emails found. Please ensure employees have email addresses.');
-          return;
-        }
-      } catch (error) {
-        console.error('Error fetching employee emails:', error);
-        alert('Failed to fetch employee emails. Please try again.');
-        return;
-      }
-    } else {
-      alert('No team assigned to this form. Please assign a team first.');
-      return;
-    }
+  const team = teams.value.find(t => t._id === form.teamId);
+  if (!team) {
+    alert('Cannot send form: Team not found');
+    return;
+  }
 
-    if (employeeEmails.length === 0) {
-      alert('No team members found with valid emails.');
-      return;
-    }
+  if (team.members.length < 2) {
+    alert('Cannot send form: Team must have at least 2 members for peer feedback');
+    return;
+  }
 
-    // Send emails
-    const emailData = {
-      to: employeeEmails,
-      subject: `Feedback Request: ${form.name}`,
-      formId: form._id!,
-      formName: form.name,
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
-    };
-
-    const result = await emailService.sendFeedbackForm(emailData);
-    
-    if (result.success) {
-      alert(`Successfully sent ${result.emailsSent} email(s) to team members.`);
+  if (confirm(`Send this form to all ${team.members.length} members of ${team.name}?`)) {
+    sending.value = true;
+    try {
+      const result = await emailService.sendFeedbackFormToTeam(
+        formId,
+        team
+      );
       
-      // Update form status to 'Sent' using the store's sendForm method
-      formsStore.sendForm(formId);
-    } else {
-      alert(`Failed to send some emails. Sent: ${result.emailsSent}, Failed: ${result.failedEmails?.length || 0}`);
+      if (result.success) {
+        alert(`Successfully sent ${result.emailsSent} feedback forms to team members!`);
+        formsStore.sendForm(formId);
+      } else {
+        alert('Failed to send forms. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error sending form:', error);
+      alert(error.message || 'Failed to send form. Please try again.');
+    } finally {
+      sending.value = false;
     }
-  } catch (error: any) {
-    console.error('Error sending form:', error);
-    alert(error.message || 'Failed to send form. Please try again.');
   }
 };
 
@@ -242,122 +254,211 @@ const sendFormFromModal = async () => {
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 2rem;
+  gap: 2rem;
 }
 
 .page-header h1 {
   color: var(--title-primary);
-  text-shadow: 1px 1px var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
 }
 
 .empty-state {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, rgba(126, 162, 170, 0.05), rgba(66, 122, 161, 0.05));
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   margin-bottom: 0.5rem;
+  color: var(--title-primary);
 }
 
 .empty-state .btn {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
-.forms-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.forms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 .form-card {
   padding: 1.5rem;
+  transition: all 0.3s ease;
+  border: 2px solid var(--border);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(126, 162, 170, 0.05));
 }
 
-.form-header {
+.form-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary);
+}
+
+.form-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 1rem;
 }
 
-.form-info h3 {
-  margin-bottom: 0.25rem;
-  color: var(--text);
+.form-icon {
+  font-size: 2rem;
 }
 
-.form-status {
+.form-status-badge {
   flex-shrink: 0;
 }
 
 .badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  padding: 0.375rem 0.875rem;
+  border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .badge-sent {
-  background: var(--success);
+  background: linear-gradient(135deg, #A0CA92, #8ABD7C);
+  color: white;
+}
+
+.badge-completed {
+  background: linear-gradient(135deg, #427AA1, #7EA2AA);
   color: white;
 }
 
 .badge-draft {
-  background: var(--warning);
+  background: linear-gradient(135deg, #998650, #67584a);
   color: white;
 }
 
-.form-details {
-  display: flex;
-  gap: 2rem;
+.form-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--title-primary);
   margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: 6px;
+  line-height: 1.4;
 }
 
-.detail-item {
+.form-meta {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  background: rgba(126, 162, 170, 0.05);
+  border-radius: 8px;
+}
+
+.meta-item {
+  display: flex;
   align-items: center;
-}
-
-.detail-label {
+  gap: 0.5rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.detail-value {
-  font-size: 0.875rem;
-  color: var(--text);
+.meta-icon {
+  font-size: 1rem;
 }
 
 .form-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.btn-sm {
-  padding: 0.375rem 0.875rem;
-  font-size: 0.8125rem;
+.btn-action {
+  flex: 1;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* Modal Styles */
+.btn-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-view {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-view:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-send {
+  border-color: #A0CA92;
+  color: #8ABD7C;
+}
+
+.btn-send:hover {
+  background: linear-gradient(135deg, #A0CA92, #8ABD7C);
+  color: white;
+}
+
+.btn-delete {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.btn-delete:hover {
+  background: var(--error);
+  color: white;
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
@@ -365,63 +466,91 @@ const sendFormFromModal = async () => {
   max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-wide {
+  max-width: 900px;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  padding: 2rem;
+  border-bottom: 2px solid var(--border);
+  background: linear-gradient(135deg, rgba(126, 162, 170, 0.05), rgba(66, 122, 161, 0.05));
 }
 
 .modal-header h2 {
-  margin: 0;
+  margin: 0 0 0.25rem 0;
   color: var(--title-primary);
 }
 
-.modal-description {
-  margin-bottom: 1.5rem;
+.modal-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
-.modal-details {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 6px;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
+.btn-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: white;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: background 0.2s;
+  flex-shrink: 0;
 }
 
-.btn-icon:hover {
-  background: var(--border);
-  color: var(--error);
+.btn-close:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: white;
+  transform: rotate(90deg);
 }
 
-.questions-section {
+.modal-body {
+  padding: 2rem;
+}
+
+.status-bar {
+  display: flex;
+  gap: 2rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
 }
 
-.questions-section h3 {
-  font-size: 1rem;
-  margin-bottom: 1rem;
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
   color: var(--title-primary);
+  margin-bottom: 1rem;
+}
+
+.questions-preview {
+  margin-bottom: 1.5rem;
 }
 
 .questions-list {
@@ -430,57 +559,129 @@ const sendFormFromModal = async () => {
   gap: 1rem;
 }
 
-.question-item {
+.question-preview-item {
   padding: 1rem;
   background: white;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.3s ease;
 }
 
-.question-text {
-  margin-bottom: 0.25rem;
+.question-preview-item:hover {
+  border-color: var(--primary);
+}
+
+.question-preview-header {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.required-badge {
-  color: var(--error);
-  font-weight: bold;
-}
-
-.question-type {
+  align-items: flex-start;
+  gap: 0.75rem;
   margin-bottom: 0.5rem;
 }
 
-.question-options {
-  list-style: disc;
-  margin-left: 1.5rem;
-  margin-top: 0.5rem;
-}
-
-.question-options li {
+.question-number-badge {
+  background: var(--primary);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
   font-size: 0.875rem;
-  color: var(--text-secondary);
-  padding: 0.125rem 0;
+  flex-shrink: 0;
 }
 
-.modal-actions {
+.question-text {
+  flex: 1;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.question-preview-meta {
   display: flex;
   gap: 0.75rem;
+  padding-left: 2.5rem;
+}
+
+.type-badge {
+  padding: 0.25rem 0.625rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.options-preview {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
   justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border);
 }
 
-.wider {
-  max-width: 800px;
-  width: 90%;
+.btn-secondary,
+.btn-primary {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.feedback-form-container {
-  padding: 1rem;
-  max-height: 70vh;
-  overflow-y: auto;
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: white;
+  box-shadow: 0 4px 12px rgba(66, 122, 161, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(66, 122, 161, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal,
+.modal-leave-active .modal {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal,
+.modal-leave-to .modal {
+  transform: scale(0.9) translateY(20px);
 }
 </style>
