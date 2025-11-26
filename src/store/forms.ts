@@ -11,16 +11,6 @@ export const useFormsStore = () => {
   const auth = useAuthStore();
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
 
-  // Load forms from backend when admin changes
-  watch(currentAdminId, async (newAdminId) => {
-    if (newAdminId) {
-      await loadFormsFromBackend();
-    } else {
-      forms.value = [];
-      loaded.value = false;
-    }
-  }, { immediate: true });
-
   const loadFormsFromBackend = async () => {
     if (!currentAdminId.value || loading.value) return;
     
@@ -63,6 +53,16 @@ export const useFormsStore = () => {
       loaded.value = true;
     }
   };
+
+  // Load forms from backend when admin changes
+  watch(currentAdminId, async (newAdminId) => {
+    if (newAdminId) {
+      await loadFormsFromBackend();
+    } else {
+      forms.value = [];
+      loaded.value = false;
+    }
+  }, { immediate: true });
 
   const saveForm = async (form: FeedbackFormDraft) => {
     try {
