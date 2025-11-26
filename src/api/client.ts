@@ -160,6 +160,10 @@ export const orgGraph = {
     membersWithRoles?: Array<{ memberId: string; role: string }>;
   }) {
     return http.post<{ team: string }>('/OrgGraph/createTeamWithRoles', data);
+  },
+
+  deleteTeam(data: API.DeleteTeamRequest) {
+    return http.post<void>('/OrgGraph/deleteTeam', data);
   }
 };
 

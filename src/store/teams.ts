@@ -162,14 +162,19 @@ export function useTeamsStore() {
   }
 
   async function deleteTeam(id: string) {
+    // Remove locally first for instant UI feedback
     teams.value = teams.value.filter((t) => t._id !== id);
-    
-    // Update localStorage cache
     const storageKey = `hrTeams_${currentAdminId.value}`;
     localStorage.setItem(storageKey, JSON.stringify(teams.value));
-    
-    // TODO: Add backend delete call when API endpoint is available
-    // await orgGraph.deleteTeam({ teamId: id });
+
+    // Persist deletion to backend (scoped by current admin if available)
+    try {
+      await orgGraph.deleteTeam({ teamId: id, owner: currentAdminId.value ?? undefined });
+    } catch (error) {
+      console.error('Error deleting team in backend:', error);
+      // On failure, reload from backend to resync state
+      await loadTeamsFromBackend();
+    }
   }
 
   return {

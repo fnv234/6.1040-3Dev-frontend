@@ -248,6 +248,11 @@ export interface GetAllTeamsResponse {
   teams: OrgTeam[];
 }
 
+export interface DeleteTeamRequest {
+  teamId: string;
+  owner?: string;
+}
+
 export interface CreateTeamWithRolesRequest {
   name: string;
   members?: string[];
