@@ -34,7 +34,7 @@
             />
           </div>
           
-          <p v-if="error" class="text-error">{{ error }}</p>
+          <p v-if="error" class="text-error">Something went wrong, please try again. </p>
           
           <GradientButton type="submit" :disabled="loading">
             {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
