@@ -98,86 +98,55 @@ export const feedbackForm = {
     return http.post<void>('/FeedbackForm/getFeedbackFormsByReviewer', data);
   },
 
-  updateFeedbackForm(data: API.UpdateFeedbackFormRequest) {
-    return http.put<API.CreateFeedbackFormResponse>('/FeedbackForm/updateFeedbackForm', data);
+  getFeedbackFormsByCreator(data: API.GetFeedbackFormsByCreatorRequest) {
+    return http.post<API.GetFeedbackFormsByCreatorResponse>('/FeedbackForm/getFeedbackFormsByCreator', data);
+  }
+};
+
+// FormTemplate endpoints (for HR-admin templates)
+export const formTemplate = {
+  createTemplate(data: API.CreateFormTemplateRequest) {
+    return http.post<API.CreateFormTemplateResponse>('/FormTemplate/createTemplate', data);
   },
 
-  deleteFeedbackForm(data: API.DeleteFeedbackFormRequest) {
-    return http.delete('/FeedbackForm/deleteFeedbackForm', { data });
-  },
-  getFeedbackFormsByCreator(data: { creator: string; startDate?: string; endDate?: string }) {
-    return http.post<{ 
-      feedbackForms: Array<{
-        _id: string;
-        name: string;
-        creator: string;
-        reviewer: string;
-        target: string;
-        teamId?: string;
-        status: 'Created' | 'Sent' | 'Completed';
-        createdDate: string;
-        completedDate?: string;
-        questions: any[];
-      }> 
-    }>('/FeedbackForm/getFeedbackFormsByCreator', data);
-  },
+  getTemplatesByCreator(data: API.GetFormTemplatesByCreatorRequest) {
+    return http.post<API.GetFormTemplatesByCreatorResponse>('/FormTemplate/getTemplatesByCreator', data);
+  }
 };
 
 // OrgGraph endpoints
 export const orgGraph = {
   importRoster(data: API.ImportRosterRequest) {
-    return http.post<void>('/org-graph/import-roster', data);
+    return http.post<void>('/OrgGraph/importRoster', data);
   },
 
   updateManager(data: API.UpdateManagerRequest) {
-    return http.post<void>('/org-graph/update-manager', data);
+    return http.post<void>('/OrgGraph/updateManager', data);
   },
 
   updateTeam(data: API.UpdateTeamRequest) {
-    return http.post<void>('/org-graph/update-team', data);
+    return http.post<void>('/OrgGraph/updateTeam', data);
   },
 
   getManager(data: API.GetManagerRequest) {
-    return http.post<API.GetManagerResponse>('/org-graph/get-manager', data);
+    return http.post<API.GetManagerResponse>('/OrgGraph/getManager', data);
   },
 
   getDirectReports(data: API.GetDirectReportsRequest) {
-    return http.post<API.GetDirectReportsResponse>('/org-graph/get-direct-reports', data);
+    return http.post<API.GetDirectReportsResponse>('/OrgGraph/getDirectReports', data);
   },
 
   getPeers(data: API.GetPeersRequest) {
-    return http.post<API.GetPeersResponse>('/org-graph/get-peers', data);
+    return http.post<API.GetPeersResponse>('/OrgGraph/getPeers', data);
   },
 
   getAllEmployees() {
-    return http.post<API.GetAllEmployeesResponse>('/org-graph/get-all-employees');
+    return http.post<API.GetAllEmployeesResponse>('/OrgGraph/getAllEmployees');
   },
 
   getAllTeams() {
-    return http.post<API.GetAllTeamsResponse>('/org-graph/get-all-teams');
-  },
-
-  createTeam(data: { name: string; members?: string[] }) {
-    return http.post<{ team: string }>('/OrgGraph/createTeam', data);
-  },
-
-  createTeamWithRoles(data: { 
-    name: string; 
-    members?: string[]; 
-    membersWithRoles?: Array<{memberId: string, role: string}> 
-  }) {
-    return http.post<{ team: string }>('/OrgGraph/createTeam', data);
-  },
-
-  getEmployee(data: { employee: string }) {
-    return http.post<{ 
-      employeeData: { 
-        _id: string; 
-        email: string; 
-        manager?: string 
-      } 
-    }>('/OrgGraph/getEmployee', data);
-  },
+    return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams');
+  }
 };
 
 // ReviewCycle endpoints
@@ -249,6 +218,7 @@ export const reportSynthesis = {
 export default {
   hrAdmin,
   feedbackForm,
+  formTemplate,
   orgGraph,
   reviewCycle,
   reportSynthesis

@@ -45,6 +45,7 @@ export interface FeedbackQuestion {
 
 export interface CreateFeedbackFormRequest {
   name: string;
+  creator: string;
   reviewer: string;
   target: string;
   questions: FeedbackQuestion[];
@@ -107,6 +108,37 @@ export interface GetFeedbackFormResponse {
   feedbackForm: FeedbackForm;
 }
 
+// FormTemplate (HR-admin templates stored by creator)
+
+export interface FormTemplate {
+  _id: string;
+  name: string;
+  creator: string;
+  teamId?: string;
+  status: FeedbackFormStatus;
+  createdDate: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFormTemplateRequest {
+  name: string;
+  creator: string;
+  teamId?: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFormTemplateResponse {
+  template: string;
+}
+
+export interface GetFormTemplatesByCreatorRequest {
+  creator: string;
+}
+
+export interface GetFormTemplatesByCreatorResponse {
+  templates: FormTemplate[];
+}
+
 export interface GetFeedbackFormsByTargetRequest {
   target: string;
   startDate: string;
@@ -118,28 +150,25 @@ export interface GetFeedbackFormsByReviewerRequest {
 }
 
 export interface GetFeedbackFormsByCreatorRequest {
-  creatorId: string;
+  creator: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface FeedbackFormWithMeta {
+  _id: string;
+  name: string;
+  creator: string;
+  reviewer: string;
+  target: string;
+  status: FeedbackFormStatus;
+  createdDate: string;
+  completedDate?: string;
+  questions: FeedbackQuestion[];
 }
 
 export interface GetFeedbackFormsByCreatorResponse {
-  forms: FeedbackForm[];
-}
-
-export interface UpdateFeedbackFormRequest {
-  formId: string;
-  updates: Partial<FeedbackForm>;
-}
-
-export interface DeleteFeedbackFormRequest {
-  formId: string;
-}
-
-export interface FeedbackFormDraft extends Omit<FeedbackForm, '_id'> {
-  _id?: string;
-  creator: string;
-  status: FeedbackFormStatus;
-  createdAt?: string;
-  updatedAt?: string;
+  feedbackForms: FeedbackFormWithMeta[];
 }
 
 // OrgGraph

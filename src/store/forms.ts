@@ -1,7 +1,7 @@
 import { ref, computed, watch } from 'vue';
 import type { FeedbackFormDraft } from '@/types';
 import { useAuthStore } from './auth';
-import { feedbackForm as feedbackFormAPI } from '@/api/client';
+import { formTemplate as formTemplateAPI } from '@/api/client';
 
 const forms = ref<FeedbackFormDraft[]>([]);
 const loading = ref(false);
@@ -21,40 +21,14 @@ export const useFormsStore = () => {
     }
   }, { immediate: true });
 
-  const loadFormsFromBackend = async () => {
-    if (!currentAdminId.value || loading.value) return;
-    
-    loading.value = true;
-    try {
-      const response = await feedbackFormAPI.getFeedbackFormsByCreator({
-        creator: currentAdminId.value
-      });
-      
-      // Transform backend response to match our FeedbackFormDraft type
-      forms.value = response.data.feedbackForms.map((form: any) => ({
-        _id: form._id,
-        name: form.name || 'Untitled Form',
-        creator: form.creator,
-        teamId: form.teamId,
-        status: form.status,
-        createdDate: form.createdDate,
-        completedDate: form.completedDate,
-        questions: form.questions
-      }));
-      
-      loaded.value = true;
-    } catch (error) {
-      console.error('Error loading forms from backend:', error);
-      // Fallback to localStorage if backend fails
-      loadFormsFromLocalStorage();
-    } finally {
-      loading.value = false;
-    }
-  };
-
   const loadFormsFromLocalStorage = () => {
-    const storageKey = `hr_feedback_forms_${currentAdminId.value}`;
-    const raw = localStorage.getItem(storageKey);
+    if (!storageKey.value) {
+      forms.value = [];
+      loaded.value = true;
+      return;
+    }
+
+    const raw = localStorage.getItem(storageKey.value);
     try {
       forms.value = raw ? (JSON.parse(raw) as FeedbackFormDraft[]) : [];
       loaded.value = true;
@@ -64,15 +38,45 @@ export const useFormsStore = () => {
     }
   };
 
-  const saveForm = async (form: FeedbackFormDraft) => {
+  const loadFormsFromBackend = async () => {
+    if (!currentAdminId.value || loading.value) return;
+
+    loading.value = true;
     try {
-      // Create form in backend
-      const response = await feedbackFormAPI.createFeedbackForm({
-        name: form.name,
-        reviewer: 'temp-reviewer', // Will be replaced when forms are sent
-        target: 'temp-target', // Will be replaced when forms are sent
-        questions: form.questions
+      const response = await formTemplateAPI.getTemplatesByCreator({
+        creator: currentAdminId.value,
       });
+
+      forms.value = response.data.templates.map((tpl: any) => ({
+        _id: tpl._id,
+        name: tpl.name || 'Untitled Form',
+        creator: tpl.creator,
+        teamId: tpl.teamId,
+        status: tpl.status,
+        createdDate: tpl.createdDate,
+        questions: tpl.questions,
+      }));
+
+      loaded.value = true;
+      if (storageKey.value) {
+        localStorage.setItem(storageKey.value, JSON.stringify(forms.value));
+      }
+    } catch (error) {
+      console.error('Error loading form templates from backend:', error);
+      loadFormsFromLocalStorage();
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  watch(currentAdminId, () => {
+    if (currentAdminId.value) {
+      loadFormsFromBackend();
+    } else {
+      forms.value = [];
+      loaded.value = false;
+    }
+  }, { immediate: true });
 
       // Update local state with backend ID
       form._id = response.data.feedbackForm;
@@ -84,15 +88,30 @@ export const useFormsStore = () => {
         forms.value.push(form);
       }
 
-      // Also save to localStorage as cache
-      const storageKey = `hr_feedback_forms_${currentAdminId.value}`;
-      localStorage.setItem(storageKey, JSON.stringify(forms.value));
-      
-      return form._id;
+  const saveForm = async (form: FeedbackFormDraft) => {
+    if (!currentAdminId.value) {
+      throw new Error('Cannot save form: no current admin');
+    }
+
+    try {
+      const response = await formTemplateAPI.createTemplate({
+        name: form.name,
+        creator: currentAdminId.value,
+        teamId: form.teamId,
+        questions: form.questions,
+      });
+
+      form._id = response.data.template;
+
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      } else {
+        forms.value.push(form);
+      }
     } catch (error) {
-      console.error('Error saving form to backend:', error);
-      
-      // Fallback to localStorage only
+      console.error('Error saving form template to backend:', error);
+
       if (!form._id) {
         form._id = `temp_${Date.now()}`;
       }
@@ -102,10 +121,7 @@ export const useFormsStore = () => {
       } else {
         forms.value.push(form);
       }
-      
-      const storageKey = `hr_feedback_forms_${currentAdminId.value}`;
-      localStorage.setItem(storageKey, JSON.stringify(forms.value));
-      
+
       throw error;
     }
   };
@@ -148,16 +164,10 @@ export const useFormsStore = () => {
       
       // Update local state
       form.status = 'Sent';
-      saveForm(form);
-    } catch (error) {
-      console.error('Error sending form:', error);
-      
-      // Fallback to local update only
-      form.status = 'Sent';
-      const storageKey = `hr_feedback_forms_${currentAdminId.value}`;
-      localStorage.setItem(storageKey, JSON.stringify(forms.value));
-      
-      throw error;
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      }
     }
   };
 
