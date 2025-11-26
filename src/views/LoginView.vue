@@ -35,6 +35,7 @@
           </div>
           
           <p v-if="error" class="text-error">Something went wrong, please try again. </p>
+          <br>
           
           <GradientButton type="submit" :disabled="loading">
             {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
@@ -127,7 +128,7 @@ const handleSubmit = async () => {
   width: 100%;
   max-width: 420px;
   text-align: center;
-  background: rgba(43, 42, 42, 0.92);
+  background: rgba(3, 33, 140, 0.66);
   border-radius: 12px;
   padding: 2.5rem;
   opacity: 0;
