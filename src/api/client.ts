@@ -98,17 +98,29 @@ export const feedbackForm = {
     return http.post<void>('/FeedbackForm/getFeedbackFormsByReviewer', data);
   },
 
-  getFeedbackFormsByCreator(data: API.GetFeedbackFormsByCreatorRequest) {
-    return http.post<API.GetFeedbackFormsByCreatorResponse>('/FeedbackForm/getFeedbackFormsByCreator', data);
-  },
-
   updateFeedbackForm(data: API.UpdateFeedbackFormRequest) {
     return http.put<API.CreateFeedbackFormResponse>('/FeedbackForm/updateFeedbackForm', data);
   },
 
   deleteFeedbackForm(data: API.DeleteFeedbackFormRequest) {
     return http.delete('/FeedbackForm/deleteFeedbackForm', { data });
-  }
+  },
+  getFeedbackFormsByCreator(data: { creator: string; startDate?: string; endDate?: string }) {
+    return http.post<{ 
+      feedbackForms: Array<{
+        _id: string;
+        name: string;
+        creator: string;
+        reviewer: string;
+        target: string;
+        teamId?: string;
+        status: 'Created' | 'Sent' | 'Completed';
+        createdDate: string;
+        completedDate?: string;
+        questions: any[];
+      }> 
+    }>('/FeedbackForm/getFeedbackFormsByCreator', data);
+  },
 };
 
 // OrgGraph endpoints
@@ -143,7 +155,29 @@ export const orgGraph = {
 
   getAllTeams() {
     return http.post<API.GetAllTeamsResponse>('/org-graph/get-all-teams');
-  }
+  },
+
+  createTeam(data: { name: string; members?: string[] }) {
+    return http.post<{ team: string }>('/OrgGraph/createTeam', data);
+  },
+
+  createTeamWithRoles(data: { 
+    name: string; 
+    members?: string[]; 
+    membersWithRoles?: Array<{memberId: string, role: string}> 
+  }) {
+    return http.post<{ team: string }>('/OrgGraph/createTeam', data);
+  },
+
+  getEmployee(data: { employee: string }) {
+    return http.post<{ 
+      employeeData: { 
+        _id: string; 
+        email: string; 
+        manager?: string 
+      } 
+    }>('/OrgGraph/getEmployee', data);
+  },
 };
 
 // ReviewCycle endpoints
