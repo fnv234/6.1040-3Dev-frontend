@@ -228,9 +228,17 @@ const sendForm = async (formId: string) => {
         const emailData = {
           to: email,
           subject: `New Feedback Form: ${form.name || 'Feedback Form'}`,
-          body: `You've been requested to provide feedback for ${form.name || 'a form'} in team ${team.name}.`,
+          body: `Hello,
+
+You've been requested to provide feedback for "${form.name || 'a form'}" in team "${team.name}".
+
+Please click the link below to access the feedback form:
+${formLink}
+
+Thank you!`,
           formLink: formLink
         };
+        console.log('Sending email with data:', emailData);
         return sendEmail(emailData);
       });
       
@@ -241,20 +249,20 @@ const sendForm = async (formId: string) => {
         (results[index] as any).value?.success === false
       );
       
-      const result = {
+      const emailResult = {
         success: successfulEmails.length > 0,
         emailsSent: successfulEmails.length,
         failedEmails: failedEmails
       };
       
-      if (result.success) {
-        alert(`Successfully sent ${result.emailsSent} feedback forms to team members!`);
+      if (emailResult.success) {
+        alert(`Successfully sent ${emailResult.emailsSent} feedback forms to team members!`);
         formsStore.sendForm(formId);
       } else {
-        const failedMessage = result.failedEmails?.length 
-          ? ` Failed to send to ${result.failedEmails.length} members.` 
+        const failedMessage = emailResult.failedEmails?.length 
+          ? ` Failed to send to ${emailResult.failedEmails.length} members.` 
           : '';
-        alert(`Sent ${result.emailsSent} forms successfully.${failedMessage}`);
+        alert(`Sent ${emailResult.emailsSent} forms successfully.${failedMessage}`);
       }
     } catch (error: any) {
       console.error('Error sending form:', error);

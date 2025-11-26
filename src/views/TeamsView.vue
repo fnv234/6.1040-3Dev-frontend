@@ -146,7 +146,7 @@ import { useTeamsStore } from '@/store/teams';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { orgGraph } from '@/api/client';
 
-const { teams, createTeam, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
+const { teams, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
 const showCreateModal = ref(false);
 const editingTeam = ref<Team | null>(null);
 
