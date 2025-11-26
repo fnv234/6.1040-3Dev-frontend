@@ -142,7 +142,7 @@ import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
-import { emailService } from '@/services/emailService';
+import { sendEmail } from '@/services/emailService';
 
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
@@ -222,16 +222,30 @@ const sendForm = async (formId: string) => {
   if (confirm(`Send this form to all ${team.members.length} members of ${team.name}?`)) {
     sending.value = true;
     try {
-      const emailData = {
-        to: team.members, // Member IDs are the email addresses
-        subject: `New Feedback Form: ${form.name || 'Feedback Form'}`,
-        formId: formId,
-        formName: form.name || 'Feedback Form',
-        teamName: team.name,
-        dueDate: form.dueDate
-      };
+      // Send email to each team member individually
+      const emailPromises = team.members.map(async (email: string) => {
+        const formLink = `${window.location.origin}/form/${formId}`;
+        const emailData = {
+          to: email,
+          subject: `New Feedback Form: ${form.name || 'Feedback Form'}`,
+          body: `You've been requested to provide feedback for ${form.name || 'a form'} in team ${team.name}.`,
+          formLink: formLink
+        };
+        return sendEmail(emailData);
+      });
       
-      const result = await emailService.sendFeedbackForm(emailData);
+      const results = await Promise.allSettled(emailPromises);
+      const successfulEmails = results.filter(result => result.status === 'fulfilled' && result.value.success);
+      const failedEmails = team.members.filter((_, index) => 
+        results[index].status === 'rejected' || 
+        (results[index] as any).value?.success === false
+      );
+      
+      const result = {
+        success: successfulEmails.length > 0,
+        emailsSent: successfulEmails.length,
+        failedEmails: failedEmails
+      };
       
       if (result.success) {
         alert(`Successfully sent ${result.emailsSent} feedback forms to team members!`);
