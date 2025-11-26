@@ -69,7 +69,6 @@ export const useFormsStore = () => {
       // Create form in backend
       const response = await feedbackFormAPI.createFeedbackForm({
         name: form.name,
-        creatorId: form.creator,
         reviewer: 'temp-reviewer', // Will be replaced when forms are sent
         target: 'temp-target', // Will be replaced when forms are sent
         questions: form.questions
