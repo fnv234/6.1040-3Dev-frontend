@@ -38,6 +38,7 @@ export interface FeedbackFormDraft {
   status: 'Created' | 'Sent' | 'Completed';
   createdDate: string;
   completedDate?: string;
+  dueDate?: string; // Optional due date for the feedback form
   questions: FeedbackQuestion[];
 }
 
