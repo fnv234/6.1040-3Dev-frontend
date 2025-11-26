@@ -45,6 +45,7 @@ export interface FeedbackQuestion {
 
 export interface CreateFeedbackFormRequest {
   name: string;
+  creator: string;
   reviewer: string;
   target: string;
   questions: FeedbackQuestion[];
@@ -107,6 +108,37 @@ export interface GetFeedbackFormResponse {
   feedbackForm: FeedbackForm;
 }
 
+// FormTemplate (HR-admin templates stored by creator)
+
+export interface FormTemplate {
+  _id: string;
+  name: string;
+  creator: string;
+  teamId?: string;
+  status: FeedbackFormStatus;
+  createdDate: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFormTemplateRequest {
+  name: string;
+  creator: string;
+  teamId?: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFormTemplateResponse {
+  template: string;
+}
+
+export interface GetFormTemplatesByCreatorRequest {
+  creator: string;
+}
+
+export interface GetFormTemplatesByCreatorResponse {
+  templates: FormTemplate[];
+}
+
 export interface GetFeedbackFormsByTargetRequest {
   target: string;
   startDate: string;
@@ -115,6 +147,28 @@ export interface GetFeedbackFormsByTargetRequest {
 
 export interface GetFeedbackFormsByReviewerRequest {
   reviewer: string;
+}
+
+export interface GetFeedbackFormsByCreatorRequest {
+  creator: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface FeedbackFormWithMeta {
+  _id: string;
+  name: string;
+  creator: string;
+  reviewer: string;
+  target: string;
+  status: FeedbackFormStatus;
+  createdDate: string;
+  completedDate?: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface GetFeedbackFormsByCreatorResponse {
+  feedbackForms: FeedbackFormWithMeta[];
 }
 
 // OrgGraph

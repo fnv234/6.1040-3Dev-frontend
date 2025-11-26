@@ -1,8 +1,11 @@
 import { ref, computed, watch } from 'vue';
 import type { FeedbackFormDraft } from '@/types';
 import { useAuthStore } from './auth';
+import { formTemplate as formTemplateAPI } from '@/api/client';
 
 const forms = ref<FeedbackFormDraft[]>([]);
+const loading = ref(false);
+const loaded = ref(false);
 
 export const useFormsStore = () => {
   const auth = useAuthStore();
@@ -15,20 +18,62 @@ export const useFormsStore = () => {
     return null;
   });
 
-  function loadFormsForCurrentUser() {
-    if (storageKey.value) {
-      const raw = localStorage.getItem(storageKey.value);
-      try {
-        forms.value = raw ? (JSON.parse(raw) as FeedbackFormDraft[]) : [];
-      } catch {
-        forms.value = [];
+  const loadFormsFromLocalStorage = () => {
+    if (!storageKey.value) {
+      forms.value = [];
+      loaded.value = true;
+      return;
+    }
+
+    const raw = localStorage.getItem(storageKey.value);
+    try {
+      forms.value = raw ? (JSON.parse(raw) as FeedbackFormDraft[]) : [];
+      loaded.value = true;
+    } catch {
+      forms.value = [];
+      loaded.value = true;
+    }
+  };
+
+  const loadFormsFromBackend = async () => {
+    if (!currentAdminId.value || loading.value) return;
+
+    loading.value = true;
+    try {
+      const response = await formTemplateAPI.getTemplatesByCreator({
+        creator: currentAdminId.value,
+      });
+
+      forms.value = response.data.templates.map((tpl: any) => ({
+        _id: tpl._id,
+        name: tpl.name || 'Untitled Form',
+        creator: tpl.creator,
+        teamId: tpl.teamId,
+        status: tpl.status,
+        createdDate: tpl.createdDate,
+        questions: tpl.questions,
+      }));
+
+      loaded.value = true;
+      if (storageKey.value) {
+        localStorage.setItem(storageKey.value, JSON.stringify(forms.value));
       }
+    } catch (error) {
+      console.error('Error loading form templates from backend:', error);
+      loadFormsFromLocalStorage();
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  watch(currentAdminId, () => {
+    if (currentAdminId.value) {
+      loadFormsFromBackend();
     } else {
       forms.value = [];
+      loaded.value = false;
     }
-  }
-
-  watch(currentAdminId, loadFormsForCurrentUser, { immediate: true });
+  }, { immediate: true });
 
   watch(
     forms,
@@ -40,15 +85,41 @@ export const useFormsStore = () => {
     { deep: true }
   );
 
-  const saveForm = (form: FeedbackFormDraft) => {
-    if (!form._id) {
-      form._id = `temp_${Date.now()}`;
+  const saveForm = async (form: FeedbackFormDraft) => {
+    if (!currentAdminId.value) {
+      throw new Error('Cannot save form: no current admin');
     }
-    const existingIndex = forms.value.findIndex((f) => f._id === form._id);
-    if (existingIndex >= 0) {
-      forms.value[existingIndex] = form;
-    } else {
-      forms.value.push(form);
+
+    try {
+      const response = await formTemplateAPI.createTemplate({
+        name: form.name,
+        creator: currentAdminId.value,
+        teamId: form.teamId,
+        questions: form.questions,
+      });
+
+      form._id = response.data.template;
+
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      } else {
+        forms.value.push(form);
+      }
+    } catch (error) {
+      console.error('Error saving form template to backend:', error);
+
+      if (!form._id) {
+        form._id = `temp_${Date.now()}`;
+      }
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      } else {
+        forms.value.push(form);
+      }
+
+      throw error;
     }
   };
 
@@ -64,12 +135,17 @@ export const useFormsStore = () => {
     const form = getFormById(formId);
     if (form) {
       form.status = 'Sent';
-      saveForm(form);
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      }
     }
   };
 
   return {
     forms,
+    loading,
+    loaded,
     saveForm,
     deleteForm,
     getFormById,

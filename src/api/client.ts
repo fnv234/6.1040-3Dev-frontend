@@ -96,6 +96,21 @@ export const feedbackForm = {
 
   getFeedbackFormsByReviewer(data: API.GetFeedbackFormsByReviewerRequest) {
     return http.post<void>('/FeedbackForm/getFeedbackFormsByReviewer', data);
+  },
+
+  getFeedbackFormsByCreator(data: API.GetFeedbackFormsByCreatorRequest) {
+    return http.post<API.GetFeedbackFormsByCreatorResponse>('/FeedbackForm/getFeedbackFormsByCreator', data);
+  }
+};
+
+// FormTemplate endpoints (for HR-admin templates)
+export const formTemplate = {
+  createTemplate(data: API.CreateFormTemplateRequest) {
+    return http.post<API.CreateFormTemplateResponse>('/FormTemplate/createTemplate', data);
+  },
+
+  getTemplatesByCreator(data: API.GetFormTemplatesByCreatorRequest) {
+    return http.post<API.GetFormTemplatesByCreatorResponse>('/FormTemplate/getTemplatesByCreator', data);
   }
 };
 
@@ -203,6 +218,7 @@ export const reportSynthesis = {
 export default {
   hrAdmin,
   feedbackForm,
+  formTemplate,
   orgGraph,
   reviewCycle,
   reportSynthesis
