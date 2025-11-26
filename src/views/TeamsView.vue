@@ -146,7 +146,7 @@ import { useTeamsStore } from '@/store/teams';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { orgGraph } from '@/api/client';
 
-const { teams, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
+const { teams, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore, loadTeamsFromBackend } = useTeamsStore();
 const showCreateModal = ref(false);
 const editingTeam = ref<Team | null>(null);
 
@@ -215,7 +215,9 @@ const importOrgChart = () => {
         } 
       });
       console.log('Import response:', response);
-      orgStatus.value = 'Org chart imported successfully.';
+      // After a successful import, refresh teams from the backend so the UI reflects the new structure
+      await loadTeamsFromBackend();
+      orgStatus.value = 'Org chart imported successfully. Teams have been updated.';
       orgStatusType.value = 'success';
     } catch (e: any) {
       console.error('Error importing org chart:', e);
