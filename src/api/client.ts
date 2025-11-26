@@ -14,7 +14,7 @@ const http: AxiosInstance = axios.create({
 
 // Request interceptor
 http.interceptors.request.use(
-  (config) => {
+  (config: any) => {
     console.log('Request:', {
       url: config.url,
       method: config.method,
@@ -23,7 +23,7 @@ http.interceptors.request.use(
     });
     return config;
   },
-  (error) => {
+  (error: any) => {
     console.error('Request error:', error);
     return Promise.reject(error);
   }
@@ -31,7 +31,7 @@ http.interceptors.request.use(
 
 // Response interceptor
 http.interceptors.response.use(
-  (response) => {
+  (response: any) => {
     console.log('Response:', {
       url: response.config.url,
       status: response.status,
@@ -39,7 +39,7 @@ http.interceptors.response.use(
     });
     return response;
   },
-  (error) => {
+  (error: any) => {
     if (error.response) {
       console.error('Response error:', {
         url: error.config?.url,
@@ -149,7 +149,7 @@ export const orgGraph = {
   },
 
   // Create a team by name and optional member list
-  createTeam(data: { name: string; members?: string[] }) {
+  createTeam(data: { name: string; members?: string[]; owner?: string }) {
     return http.post<{ team: string }>('/OrgGraph/createTeam', data);
   },
 
@@ -158,6 +158,7 @@ export const orgGraph = {
     name: string;
     members?: string[];
     membersWithRoles?: Array<{ memberId: string; role: string }>;
+    owner?: string;
   }) {
     return http.post<{ team: string }>('/OrgGraph/createTeamWithRoles', data);
   },

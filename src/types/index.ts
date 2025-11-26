@@ -13,6 +13,7 @@ export interface TeamMember {
 export interface Team {
   _id: string;
   name: string;
+  owner: string; // HR Admin ID who owns this team
   members: string[]; // Employee IDs (for backward compatibility)
   membersWithRoles?: TeamMember[]; // New field for members with roles
 }

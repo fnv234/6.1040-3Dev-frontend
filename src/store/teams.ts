@@ -12,7 +12,7 @@ export function useTeamsStore() {
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
 
   // Load teams from backend when admin changes
-  watch(currentAdminId, async (newAdminId) => {
+  watch(currentAdminId, async (newAdminId: string | undefined) => {
     if (newAdminId) {
       await loadTeamsFromBackend();
     } else {
@@ -32,6 +32,7 @@ export function useTeamsStore() {
       teams.value = response.data.teams.map((team: any) => ({
         _id: team._id,
         name: team.name,
+        owner: team.owner || currentAdminId.value,
         members: team.members || [],
         membersWithRoles: team.membersWithRoles || []
       }));
@@ -67,12 +68,14 @@ export function useTeamsStore() {
       // Create team in backend via OrgGraph
       const response = await orgGraph.createTeam({
         name,
-        members: memberEmails
+        members: memberEmails,
+        owner: currentAdminId.value ?? undefined
       });
 
       const team: Team = {
         _id: response.data.team,
         name,
+        owner: currentAdminId.value ?? '',
         members: memberEmails,
       };
       
@@ -90,6 +93,7 @@ export function useTeamsStore() {
       const team: Team = {
         _id: `temp_team_${Date.now()}`,
         name,
+        owner: currentAdminId.value ?? '',
         members: memberEmails,
       };
       teams.value.push(team);
@@ -111,12 +115,14 @@ export function useTeamsStore() {
       const response = await orgGraph.createTeamWithRoles({
         name,
         members: memberEmails,
-        membersWithRoles
+        membersWithRoles,
+        owner: currentAdminId.value ?? undefined
       });
 
       const team: Team = {
         _id: response.data.team,
         name,
+        owner: currentAdminId.value ?? '',
         members: memberEmails,
         membersWithRoles,
       };
@@ -135,6 +141,7 @@ export function useTeamsStore() {
       const team: Team = {
         _id: `temp_team_${Date.now()}`,
         name,
+        owner: currentAdminId.value ?? '',
         members: memberEmails,
         membersWithRoles,
       };
@@ -148,7 +155,7 @@ export function useTeamsStore() {
   }
 
   async function updateTeam(updated: Team) {
-    const index = teams.value.findIndex((t) => t._id === updated._id);
+    const index = teams.value.findIndex((t: Team) => t._id === updated._id);
     if (index !== -1) {
       teams.value[index] = { ...updated };
       
@@ -163,7 +170,7 @@ export function useTeamsStore() {
 
   async function deleteTeam(id: string) {
     // Remove locally first for instant UI feedback
-    teams.value = teams.value.filter((t) => t._id !== id);
+    teams.value = teams.value.filter((t: Team) => t._id !== id);
     const storageKey = `hrTeams_${currentAdminId.value}`;
     localStorage.setItem(storageKey, JSON.stringify(teams.value));
 
