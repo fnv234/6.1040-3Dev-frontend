@@ -96,6 +96,18 @@ export const feedbackForm = {
 
   getFeedbackFormsByReviewer(data: API.GetFeedbackFormsByReviewerRequest) {
     return http.post<void>('/FeedbackForm/getFeedbackFormsByReviewer', data);
+  },
+
+  getFeedbackFormsByCreator(data: API.GetFeedbackFormsByCreatorRequest) {
+    return http.post<API.GetFeedbackFormsByCreatorResponse>('/FeedbackForm/getFeedbackFormsByCreator', data);
+  },
+
+  updateFeedbackForm(data: API.UpdateFeedbackFormRequest) {
+    return http.put<API.CreateFeedbackFormResponse>('/FeedbackForm/updateFeedbackForm', data);
+  },
+
+  deleteFeedbackForm(data: API.DeleteFeedbackFormRequest) {
+    return http.delete('/FeedbackForm/deleteFeedbackForm', { data });
   }
 };
 
