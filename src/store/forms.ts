@@ -11,12 +11,15 @@ export const useFormsStore = () => {
   const auth = useAuthStore();
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
 
-  const storageKey = computed(() => {
-    if (currentAdminId.value) {
-      return `hr_feedback_forms_${currentAdminId.value}`;
+  // Load forms from backend when admin changes
+  watch(currentAdminId, async (newAdminId) => {
+    if (newAdminId) {
+      await loadFormsFromBackend();
+    } else {
+      forms.value = [];
+      loaded.value = false;
     }
-    return null;
-  });
+  }, { immediate: true });
 
   const loadFormsFromLocalStorage = () => {
     if (!storageKey.value) {
@@ -75,15 +78,15 @@ export const useFormsStore = () => {
     }
   }, { immediate: true });
 
-  watch(
-    forms,
-    (newForms) => {
-      if (storageKey.value) {
-        localStorage.setItem(storageKey.value, JSON.stringify(newForms));
+      // Update local state with backend ID
+      form._id = response.data.feedbackForm;
+      
+      const existingIndex = forms.value.findIndex((f) => f._id === form._id);
+      if (existingIndex >= 0) {
+        forms.value[existingIndex] = form;
+      } else {
+        forms.value.push(form);
       }
-    },
-    { deep: true }
-  );
 
   const saveForm = async (form: FeedbackFormDraft) => {
     if (!currentAdminId.value) {
@@ -123,17 +126,43 @@ export const useFormsStore = () => {
     }
   };
 
-  const deleteForm = (formId: string) => {
-    forms.value = forms.value.filter((f) => f._id !== formId);
+  const deleteForm = async (formId: string) => {
+    try {
+      // Delete from backend (if endpoint exists)
+      // Note: Your backend doesn't have a delete endpoint yet, so this will fail gracefully
+      try {
+        await feedbackFormAPI.deleteFeedbackForm({ formId });
+      } catch (e) {
+        console.warn('Backend delete not available:', e);
+      }
+
+      // Delete from local state
+      forms.value = forms.value.filter((f) => f._id !== formId);
+      
+      // Update localStorage cache
+      const storageKey = `hr_feedback_forms_${currentAdminId.value}`;
+      localStorage.setItem(storageKey, JSON.stringify(forms.value));
+    } catch (error) {
+      console.error('Error deleting form:', error);
+      throw error;
+    }
   };
 
   const getFormById = (formId: string): FeedbackFormDraft | undefined => {
     return forms.value.find((f) => f._id === formId);
   };
 
-  const sendForm = (formId: string) => {
+  const sendForm = async (formId: string) => {
     const form = getFormById(formId);
-    if (form) {
+    if (!form) {
+      throw new Error('Form not found');
+    }
+
+    try {
+      // Update form status in backend
+      await feedbackFormAPI.sendFeedbackForm({ feedbackForm: formId });
+      
+      // Update local state
       form.status = 'Sent';
       const existingIndex = forms.value.findIndex((f) => f._id === form._id);
       if (existingIndex >= 0) {
@@ -150,5 +179,6 @@ export const useFormsStore = () => {
     deleteForm,
     getFormById,
     sendForm,
+    loadFormsFromBackend,
   };
 };
