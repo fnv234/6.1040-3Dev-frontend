@@ -117,6 +117,31 @@ export interface GetFeedbackFormsByReviewerRequest {
   reviewer: string;
 }
 
+export interface GetFeedbackFormsByCreatorRequest {
+  creatorId: string;
+}
+
+export interface GetFeedbackFormsByCreatorResponse {
+  forms: FeedbackForm[];
+}
+
+export interface UpdateFeedbackFormRequest {
+  formId: string;
+  updates: Partial<FeedbackForm>;
+}
+
+export interface DeleteFeedbackFormRequest {
+  formId: string;
+}
+
+export interface FeedbackFormDraft extends Omit<FeedbackForm, '_id'> {
+  _id?: string;
+  creator: string;
+  status: FeedbackFormStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // OrgGraph
 
 export interface OrgEmployeeSource {
