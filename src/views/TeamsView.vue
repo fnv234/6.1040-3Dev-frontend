@@ -143,8 +143,12 @@
 import { computed, ref } from 'vue';
 import type { Team } from '@/types';
 import { useTeamsStore } from '@/store/teams';
+import { useAuthStore } from '@/store/auth';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { orgGraph } from '@/api/client';
+
+const auth = useAuthStore();
+const currentAdminId = computed(() => auth.currentAdmin.value?._id);
 
 const { teams, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore, loadTeamsFromBackend } = useTeamsStore();
 const showCreateModal = ref(false);
@@ -202,14 +206,16 @@ const importOrgChart = () => {
         throw new Error('Invalid file format: expected { "employees": [...] }');
       }
       // Transform the data to match the backend's expected format
-      const transformedEmployees = parsed.employees.map((emp: { id: string; email?: string; manager?: string; teamName?: string }) => ({
+      const transformedEmployees = parsed.employees.map((emp: { id: string; email?: string; manager?: string; teamName?: string; role?: string }) => ({
         id: emp.id,
         email: emp.email || `${emp.id}@example.com`, // Default email if not provided
         manager: emp.manager,
-        teamNames: emp.teamName ? [emp.teamName] : [] // Convert teamName to teamNames array
+        teamNames: emp.teamName ? [emp.teamName] : [], // Convert teamName to teamNames array
+        role: emp.role,
       }));
       
       const response = await orgGraph.importRoster({ 
+        owner: currentAdminId.value ?? undefined,
         sourceData: { 
           employees: transformedEmployees 
         } 

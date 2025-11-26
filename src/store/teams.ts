@@ -26,7 +26,7 @@ export function useTeamsStore() {
     
     loading.value = true;
     try {
-      const response = await orgGraph.getAllTeams();
+      const response = await orgGraph.getAllTeams({ owner: currentAdminId.value ?? undefined });
       
       // Transform backend response to match our Team type
       teams.value = response.data.teams.map((team: any) => ({

@@ -144,8 +144,8 @@ export const orgGraph = {
     return http.post<API.GetAllEmployeesResponse>('/OrgGraph/getAllEmployees');
   },
 
-  getAllTeams() {
-    return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams');
+  getAllTeams(data?: API.GetAllTeamsRequest) {
+    return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams', data ?? {});
   },
 
   // Create a team by name and optional member list

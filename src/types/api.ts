@@ -175,11 +175,15 @@ export interface GetFeedbackFormsByCreatorResponse {
 
 export interface OrgEmployeeSource {
   id: string;
-  manager: string;
-  teamName: string;
+  email?: string;
+  manager?: string;
+  teamName?: string;
+  role?: string;
 }
 
 export interface ImportRosterRequest {
+  // Optional owner/admin id to scope org data per account
+  owner?: string;
   sourceData: {
     employees: OrgEmployeeSource[];
   };
@@ -233,6 +237,11 @@ export interface OrgTeam {
   name: string;
   members: string[];
   membersWithRoles?: TeamMember[];
+}
+
+export interface GetAllTeamsRequest {
+  // Optional owner/admin id to scope teams per account
+  owner?: string;
 }
 
 export interface GetAllTeamsResponse {
