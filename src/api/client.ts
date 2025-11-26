@@ -146,6 +146,20 @@ export const orgGraph = {
 
   getAllTeams() {
     return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams');
+  },
+
+  // Create a team by name and optional member list
+  createTeam(data: { name: string; members?: string[] }) {
+    return http.post<{ team: string }>('/OrgGraph/createTeam', data);
+  },
+
+  // Create a team with explicit member roles
+  createTeamWithRoles(data: {
+    name: string;
+    members?: string[];
+    membersWithRoles?: Array<{ memberId: string; role: string }>;
+  }) {
+    return http.post<{ team: string }>('/OrgGraph/createTeamWithRoles', data);
   }
 };
 
