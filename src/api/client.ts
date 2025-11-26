@@ -117,35 +117,35 @@ export const formTemplate = {
 // OrgGraph endpoints
 export const orgGraph = {
   importRoster(data: API.ImportRosterRequest) {
-    return http.post<void>('/org-graph/import-roster', data);
+    return http.post<void>('/OrgGraph/importRoster', data);
   },
 
   updateManager(data: API.UpdateManagerRequest) {
-    return http.post<void>('/org-graph/update-manager', data);
+    return http.post<void>('/OrgGraph/updateManager', data);
   },
 
   updateTeam(data: API.UpdateTeamRequest) {
-    return http.post<void>('/org-graph/update-team', data);
+    return http.post<void>('/OrgGraph/updateTeam', data);
   },
 
   getManager(data: API.GetManagerRequest) {
-    return http.post<API.GetManagerResponse>('/org-graph/get-manager', data);
+    return http.post<API.GetManagerResponse>('/OrgGraph/getManager', data);
   },
 
   getDirectReports(data: API.GetDirectReportsRequest) {
-    return http.post<API.GetDirectReportsResponse>('/org-graph/get-direct-reports', data);
+    return http.post<API.GetDirectReportsResponse>('/OrgGraph/getDirectReports', data);
   },
 
   getPeers(data: API.GetPeersRequest) {
-    return http.post<API.GetPeersResponse>('/org-graph/get-peers', data);
+    return http.post<API.GetPeersResponse>('/OrgGraph/getPeers', data);
   },
 
   getAllEmployees() {
-    return http.post<API.GetAllEmployeesResponse>('/org-graph/get-all-employees');
+    return http.post<API.GetAllEmployeesResponse>('/OrgGraph/getAllEmployees');
   },
 
   getAllTeams() {
-    return http.post<API.GetAllTeamsResponse>('/org-graph/get-all-teams');
+    return http.post<API.GetAllTeamsResponse>('/OrgGraph/getAllTeams');
   }
 };
 
