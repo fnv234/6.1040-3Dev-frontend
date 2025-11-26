@@ -36,12 +36,25 @@
           <p class="text-secondary">{{ team.members.length }} members</p>
         </div>
         <div class="team-members">
-          <h4>Team Members (Employee IDs)</h4>
-          <ul class="member-list">
-            <li v-for="(memberId, idx) in team.members" :key="idx">
-              {{ memberId }}
-            </li>
-          </ul>
+          <h4>Team Members</h4>
+          <div v-if="team.membersWithRoles && team.membersWithRoles.length > 0">
+            <ul class="member-list-with-roles">
+              <li v-for="(member, idx) in team.membersWithRoles" :key="idx" class="member-with-role">
+                <span class="member-id">{{ member.memberId }}</span>
+                <span class="member-role">{{ member.role }}</span>
+              </li>
+            </ul>
+          </div>
+          <div v-else-if="team.members && team.members.length > 0">
+            <ul class="member-list">
+              <li v-for="(memberId, idx) in team.members" :key="idx">
+                {{ memberId }}
+              </li>
+            </ul>
+          </div>
+          <div v-else>
+            <p class="text-secondary">No members added yet</p>
+          </div>
         </div>
         <div class="team-actions">
           <GradientButton @click="editTeam(team)" variant="variant">Edit</GradientButton>
@@ -68,16 +81,50 @@
           </div>
           
           <div class="form-group">
-            <label class="label" for="memberIds">Member IDs (one per line)</label>
+            <label class="label">Team Members with Roles</label>
+            <div class="members-with-roles-section">
+              <div v-if="formData.membersWithRoles.length === 0" class="empty-members">
+                <p class="text-secondary">No members added yet.</p>
+              </div>
+              <div v-else class="members-list">
+                <div v-for="(member, idx) in formData.membersWithRoles" :key="idx" class="member-row">
+                  <div class="member-inputs">
+                    <input
+                      v-model="member.memberId"
+                      type="text"
+                      class="input member-id-input"
+                      placeholder="Employee ID (e.g., emp001)"
+                      required
+                    />
+                    <input
+                      v-model="member.role"
+                      type="text"
+                      class="input member-role-input"
+                      placeholder="Role (e.g., manager, team lead)"
+                      required
+                    />
+                  </div>
+                  <button @click="removeMemberWithRole(idx)" class="btn-remove" type="button">
+                    Remove
+                  </button>
+                </div>
+              </div>
+              <GradientButton @click="addMemberWithRole" type="button" variant="variant">
+                + Add Member
+              </GradientButton>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="memberIds">Or add Member IDs (one per line) - legacy method</label>
             <textarea
               id="memberIds"
               v-model="memberIdsText"
               class="input textarea"
-              rows="6"
+              rows="4"
               placeholder="emp001&#10;emp002&#10;emp003"
-              required
             ></textarea>
-            <small class="text-secondary">Enter one employee ID per line</small>
+            <small class="text-secondary">Use this for quick entry without roles. Members with roles take priority.</small>
           </div>
 
           <div class="modal-actions">
@@ -99,13 +146,14 @@ import { useTeamsStore } from '@/store/teams';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { orgGraph } from '@/api/client';
 
-const { teams, createTeam, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
+const { teams, createTeam, createTeamWithRoles, updateTeam, deleteTeam: deleteTeamFromStore } = useTeamsStore();
 const showCreateModal = ref(false);
 const editingTeam = ref<Team | null>(null);
 
 const formData = ref({
   name: '',
-  members: [] as string[]
+  members: [] as string[],
+  membersWithRoles: [] as Array<{memberId: string, role: string}>
 });
 
 const memberIdsText = computed({
@@ -117,6 +165,14 @@ const memberIdsText = computed({
       .filter(id => id.length > 0);
   }
 });
+
+const addMemberWithRole = () => {
+  formData.value.membersWithRoles.push({ memberId: '', role: '' });
+};
+
+const removeMemberWithRole = (index: number) => {
+  formData.value.membersWithRoles.splice(index, 1);
+};
 
 const orgFile = ref<File | null>(null);
 const orgUploading = ref(false);
@@ -208,28 +264,43 @@ const importOrgChart = () => {
 const closeModal = () => {
   showCreateModal.value = false;
   editingTeam.value = null;
-  formData.value = { name: '', members: [] };
+  formData.value = { name: '', members: [], membersWithRoles: [] };
 };
 
 const editTeam = (team: Team) => {
   editingTeam.value = team;
   formData.value = {
     name: team.name,
-    members: [...team.members]
+    members: [...team.members],
+    membersWithRoles: team.membersWithRoles ? [...team.membersWithRoles] : []
   };
   showCreateModal.value = true;
 };
 
 const saveTeam = async () => {
+  // Combine members with roles and legacy members list
+  const allMembers = [
+    ...formData.value.membersWithRoles.map(m => m.memberId),
+    ...formData.value.members
+  ].filter(id => id.trim() !== '');
+  
+  // Remove duplicates
+  const uniqueMembers = [...new Set(allMembers)];
+  
   if (editingTeam.value) {
     const updated: Team = {
       ...editingTeam.value,
       name: formData.value.name,
-      members: formData.value.members
+      members: uniqueMembers,
+      membersWithRoles: formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '')
     };
     updateTeam(updated);
   } else {
-    createTeam(formData.value.name, formData.value.members);
+    createTeamWithRoles(
+      formData.value.name, 
+      uniqueMembers, 
+      formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '')
+    );
   }
 
   closeModal();
@@ -379,5 +450,98 @@ const deleteTeam = (teamId: string) => {
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
+}
+
+.members-with-roles-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  background: white;
+}
+
+.empty-members {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-secondary);
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.member-inputs {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.member-id-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-role-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-remove {
+  background: var(--error);
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.btn-remove:hover {
+  background: var(--error-dark, #d32f2f);
+}
+
+.member-list-with-roles {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.member-with-role {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.member-with-role:last-child {
+  border-bottom: none;
+}
+
+.member-id {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.member-role {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: var(--bg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
 }
 </style>

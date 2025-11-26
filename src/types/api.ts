@@ -38,13 +38,35 @@ export type QuestionType = 'Free' | 'Scale' | 'Multiple Choice';
 export interface FeedbackQuestion {
   prompt: string;
   type: QuestionType;
+  targetRoles?: string[]; // Optional: if specified, only members with these roles will see this question
 }
 
 // FeedbackForm
 
 export interface CreateFeedbackFormRequest {
+  name: string;
   reviewer: string;
   target: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFeedbackFormForTeamRequest {
+  name: string;
+  creator: string;
+  teamId: string;
+  questions: FeedbackQuestion[];
+}
+
+export interface CreateFeedbackFormForTeamResponse {
+  feedbackForms: string[];
+}
+
+export interface GetQuestionsForRoleRequest {
+  feedbackForm: string;
+  memberRole: string | null;
+}
+
+export interface GetQuestionsForRoleResponse {
   questions: FeedbackQuestion[];
 }
 
@@ -147,13 +169,48 @@ export interface GetAllEmployeesResponse {
   employees: string[];
 }
 
+export interface TeamMember {
+  memberId: string;
+  role: string;
+}
+
 export interface OrgTeam {
   _id: string;
   name: string;
+  members: string[];
+  membersWithRoles?: TeamMember[];
 }
 
 export interface GetAllTeamsResponse {
   teams: OrgTeam[];
+}
+
+export interface CreateTeamWithRolesRequest {
+  name: string;
+  members?: string[];
+  membersWithRoles?: TeamMember[];
+}
+
+export interface CreateTeamWithRolesResponse {
+  team: string;
+}
+
+export interface GetTeamMembersByRoleRequest {
+  teamId: string;
+  roles: string[];
+}
+
+export interface GetTeamMembersByRoleResponse {
+  members: string[];
+}
+
+export interface GetMemberRoleRequest {
+  teamId: string;
+  memberId: string;
+}
+
+export interface GetMemberRoleResponse {
+  role: string | null;
 }
 
 // ReviewCycle

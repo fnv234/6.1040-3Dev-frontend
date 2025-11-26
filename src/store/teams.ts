@@ -1,5 +1,5 @@
 import { ref, watch, computed } from 'vue';
-import type { Team } from '@/types';
+import type { Team, TeamMember } from '@/types';
 import { useAuthStore } from './auth';
 
 const teams = ref<Team[]>([]);
@@ -50,6 +50,17 @@ export function useTeamsStore() {
     return team;
   }
 
+  function createTeamWithRoles(name: string, memberEmails: string[], membersWithRoles: TeamMember[]): Team {
+    const team: Team = {
+      _id: `temp_team_${Date.now()}`,
+      name,
+      members: memberEmails,
+      membersWithRoles: membersWithRoles,
+    };
+    teams.value.push(team);
+    return team;
+  }
+
   function updateTeam(updated: Team) {
     const index = teams.value.findIndex((t) => t._id === updated._id);
     if (index !== -1) {
@@ -64,6 +75,7 @@ export function useTeamsStore() {
   return {
     teams,
     createTeam,
+    createTeamWithRoles,
     updateTeam,
     deleteTeam,
   };

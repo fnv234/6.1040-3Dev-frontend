@@ -5,16 +5,23 @@ export interface HRAdmin {
   email: string;
 }
 
+export interface TeamMember {
+  memberId: string; // Employee ID
+  role: string; // e.g., "manager", "team lead", "developer", etc.
+}
+
 export interface Team {
   _id: string;
   name: string;
-  members: string[]; // Employee IDs
+  members: string[]; // Employee IDs (for backward compatibility)
+  membersWithRoles?: TeamMember[]; // New field for members with roles
 }
 
 export interface FeedbackQuestion {
   prompt: string;
   type: 'Multiple Choice' | 'Free' | 'Scale';
   response?: string;
+  targetRoles?: string[]; // Optional: if specified, only members with these roles will see this question
 }
 
 export interface FeedbackForm {
