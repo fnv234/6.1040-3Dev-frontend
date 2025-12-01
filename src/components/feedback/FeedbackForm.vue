@@ -65,7 +65,7 @@
         </div>
       </div>
 
-      <div class="form-actions">
+      <div v-if="showSubmitButton" class="form-actions">
         <button type="button" @click="$emit('cancel')" class="btn-cancel">
           Cancel
         </button>
@@ -94,6 +94,10 @@ const props = defineProps({
       placeholder?: string;
     }>,
     required: true
+  },
+  showSubmitButton: {
+    type: Boolean,
+    default: true
   }
 });
 

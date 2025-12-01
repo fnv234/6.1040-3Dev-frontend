@@ -52,6 +52,10 @@
             <span class="btn-icon">👁️</span>
             View
           </button>
+          <button @click="previewForm(form._id!)" class="btn-action btn-preview">
+            <span class="btn-icon">📝</span>
+            Preview
+          </button>
           <button v-if="form.status === 'Created'" @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
             <span class="btn-icon">📤</span>
             {{ sending ? 'Sending...' : 'Send' }}
@@ -138,12 +142,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { sendEmail } from '@/services/emailService';
 
+const router = useRouter();
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
 
@@ -177,6 +183,13 @@ const formatDate = (dateStr: string) => {
 const viewForm = (form: any) => {
   viewingForm.value = form;
   showFeedbackForm.value = false;
+};
+
+const previewForm = (formId: string) => {
+  router.push({
+    path: `/form/${formId}`,
+    query: { preview: 'true' }
+  });
 };
 
 const closeModal = () => {
@@ -449,6 +462,16 @@ const sendFormFromModal = async () => {
 
 .btn-view:hover {
   background: var(--primary);
+  color: white;
+}
+
+.btn-preview {
+  border-color: #FFA726;
+  color: #FB8C00;
+}
+
+.btn-preview:hover {
+  background: linear-gradient(135deg, #FFA726, #FB8C00);
   color: white;
 }
 
