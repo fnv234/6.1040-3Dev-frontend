@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.0.0",
+    "@sendgrid/mail": "^8.1.6",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/three": "^0.181.0",
     "axios": "^1.7.7",
