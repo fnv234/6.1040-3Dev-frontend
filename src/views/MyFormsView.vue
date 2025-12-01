@@ -48,12 +48,8 @@
         </div>
 
         <div class="form-actions">
-          <button @click="viewForm(form)" class="btn-action btn-view">
+          <button @click="previewForm(form._id!)" class="btn-action btn-view">
             <span class="btn-icon">👁️</span>
-            View
-          </button>
-          <button @click="previewForm(form._id!)" class="btn-action btn-preview">
-            <span class="btn-icon">📝</span>
             Preview
           </button>
           <button v-if="form.status === 'Created'" @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
@@ -67,83 +63,12 @@
         </div>
       </div>
     </div>
-
-    <!-- View/Fill Form Modal -->
-    <transition name="modal">
-      <div v-if="viewingForm" class="modal-overlay" @click.self="closeModal">
-        <div class="modal" :class="{ 'modal-wide': showFeedbackForm }">
-          <div class="modal-header">
-            <div>
-              <h2>{{ viewingForm.name || 'Untitled Form' }}</h2>
-              <p class="modal-subtitle">{{ viewingForm.questions.length }} questions • {{ getTeamName(viewingForm.teamId) }}</p>
-            </div>
-            <button @click="closeModal" class="btn-close" title="Close">
-              <span>✕</span>
-            </button>
-          </div>
-          
-          <!-- Form Preview -->
-          <div v-if="!showFeedbackForm" class="modal-body">
-            <div class="status-bar">
-              <div class="status-item">
-                <span class="status-label">Status:</span>
-                <span v-if="viewingForm.status === 'Sent'" class="badge badge-sent">✓ Sent</span>
-                <span v-else-if="viewingForm.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
-                <span v-else class="badge badge-draft">Draft</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Created:</span>
-                <span>{{ formatDate(viewingForm.createdDate) }}</span>
-              </div>
-            </div>
-
-            <div class="questions-preview">
-              <h3 class="section-title">Questions Preview</h3>
-              <div class="questions-list">
-                <div v-for="(question, idx) in viewingForm.questions" :key="idx" class="question-preview-item">
-                  <div class="question-preview-header">
-                    <span class="question-number-badge">{{ idx + 1 }}</span>
-                    <span class="question-text">{{ question.prompt }}</span>
-                  </div>
-                  <div class="question-preview-meta">
-                    <span class="type-badge">{{ question.type }}</span>
-                    <span v-if="question.options" class="options-preview">
-                      {{ question.options.length }} options
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button @click="closeModal" class="btn-secondary">Close</button>
-              <button v-if="viewingForm.status === 'Created'" @click="sendFormFromModal" class="btn-primary" :disabled="sending">
-                {{ sending ? 'Sending...' : '📤 Send Form' }}
-              </button>
-              <button v-else @click="showFeedbackForm = true" class="btn-primary">
-                📝 Fill Out Form
-              </button>
-            </div>
-          </div>
-
-          <!-- Feedback Form -->
-          <div v-else class="modal-body">
-            <FeedbackForm 
-              :questions="viewingForm.questions"
-              @submit="handleFeedbackSubmit"
-              @cancel="showFeedbackForm = false"
-            />
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
@@ -156,8 +81,6 @@ const teamsStore = useTeamsStore();
 const { forms } = formsStore;
 const { teams } = teamsStore;
 
-const viewingForm = ref<any | null>(null);
-const showFeedbackForm = ref(false);
 const sending = ref(false);
 
 const sortedForms = computed(() => {
@@ -180,32 +103,11 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const viewForm = (form: any) => {
-  viewingForm.value = form;
-  showFeedbackForm.value = false;
-};
-
 const previewForm = (formId: string) => {
   router.push({
     path: `/form/${formId}`,
     query: { preview: 'true' }
   });
-};
-
-const closeModal = () => {
-  viewingForm.value = null;
-  showFeedbackForm.value = false;
-};
-
-const handleFeedbackSubmit = async (feedbackData: any) => {
-  try {
-    console.log('Feedback submitted:', feedbackData);
-    alert('Feedback submitted successfully!');
-    closeModal();
-  } catch (error) {
-    console.error('Error submitting feedback:', error);
-    alert('Failed to submit feedback. Please try again.');
-  }
 };
 
 const deleteForm = (formId: string) => {
@@ -283,13 +185,6 @@ Thank you!`,
     } finally {
       sending.value = false;
     }
-  }
-};
-
-const sendFormFromModal = async () => {
-  if (viewingForm.value && viewingForm.value._id) {
-    await sendForm(viewingForm.value._id);
-    closeModal();
   }
 };
 </script>
@@ -497,245 +392,5 @@ const sendFormFromModal = async () => {
 
 .btn-icon {
   font-size: 1rem;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.modal-wide {
-  max-width: 900px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 2rem;
-  border-bottom: 2px solid var(--border);
-  background: linear-gradient(135deg, rgba(126, 162, 170, 0.05), rgba(66, 122, 161, 0.05));
-}
-
-.modal-header h2 {
-  margin: 0 0 0.25rem 0;
-  color: var(--title-primary);
-}
-
-.modal-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.btn-close {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.btn-close:hover {
-  background: var(--error);
-  border-color: var(--error);
-  color: white;
-  transform: rotate(90deg);
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.status-bar {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-}
-
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.status-label {
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.section-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--title-primary);
-  margin-bottom: 1rem;
-}
-
-.questions-preview {
-  margin-bottom: 1.5rem;
-}
-
-.questions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.question-preview-item {
-  padding: 1rem;
-  background: white;
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  transition: border-color 0.3s ease;
-}
-
-.question-preview-item:hover {
-  border-color: var(--primary);
-}
-
-.question-preview-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.question-number-badge {
-  background: var(--primary);
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-}
-
-.question-text {
-  flex: 1;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.question-preview-meta {
-  display: flex;
-  gap: 0.75rem;
-  padding-left: 2.5rem;
-}
-
-.type-badge {
-  padding: 0.25rem 0.625rem;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.options-preview {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.modal-footer {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  padding-top: 1.5rem;
-  border-top: 2px solid var(--border);
-}
-
-.btn-secondary,
-.btn-primary {
-  padding: 0.875rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text);
-  border: 2px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: var(--border);
-  transform: translateY(-2px);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
-  box-shadow: 0 4px 12px rgba(66, 122, 161, 0.3);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(66, 122, 161, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Modal transition */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-enter-active .modal,
-.modal-leave-active .modal {
-  transition: transform 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal,
-.modal-leave-to .modal {
-  transform: scale(0.9) translateY(20px);
 }
 </style>
