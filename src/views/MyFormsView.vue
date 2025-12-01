@@ -10,71 +10,174 @@
       </router-link>
     </div>
 
-    <div v-if="forms.length === 0" class="empty-state card">
-      <div class="empty-icon">📋</div>
-      <h3>No forms yet</h3>
-      <p class="text-secondary">Create your first feedback form to get started</p>
-      <router-link to="/forms/new">
-        <GradientButton>Create Form</GradientButton>
-      </router-link>
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button 
+          @click="activeTab = 'drafts'" 
+          :class="['tab', { active: activeTab === 'drafts' }]"
+        >
+          <span class="tab-icon">📝</span>
+          My Drafts
+          <span class="tab-count">{{ draftForms.length }}</span>
+        </button>
+        <button 
+          @click="activeTab = 'sent'" 
+          :class="['tab', { active: activeTab === 'sent' }]"
+        >
+          <span class="tab-icon">📤</span>
+          Sent Forms
+          <span class="tab-count">{{ sentForms.length }}</span>
+        </button>
+      </div>
     </div>
 
-    <div v-else class="forms-grid">
-      <div v-for="form in sortedForms" :key="form._id" class="form-card card">
-        <div class="form-card-header">
-          <div class="form-icon">📄</div>
-          <div class="form-status-badge">
-            <span v-if="form.status === 'Sent'" class="badge badge-sent">✓ Sent</span>
-            <span v-else-if="form.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
-            <span v-else class="badge badge-draft">Draft</span>
-          </div>
-        </div>
-        
-        <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
-        
-        <div class="form-meta">
-          <div class="meta-item">
-            <span class="meta-icon">❓</span>
-            <span>{{ form.questions.length }} questions</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-icon">📅</span>
-            <span>{{ formatDate(form.createdDate) }}</span>
-          </div>
-          <div v-if="form.teamId" class="meta-item">
-            <span class="meta-icon">👥</span>
-            <span>{{ getTeamName(form.teamId) }}</span>
-          </div>
-        </div>
+    <!-- My Drafts Tab -->
+    <div v-if="activeTab === 'drafts'">
+      <div v-if="draftForms.length === 0" class="empty-state card">
+        <div class="empty-icon">📝</div>
+        <h3>No drafts yet</h3>
+        <p class="text-secondary">Create your first feedback form to get started</p>
+        <router-link to="/forms/new">
+          <GradientButton>Create Form</GradientButton>
+        </router-link>
+      </div>
 
-        <div class="form-actions">
-          <button @click="previewForm(form._id!)" class="btn-action btn-view">
-            <span class="btn-icon">👁️</span>
-            Preview
-          </button>
-          <button v-if="form.status === 'Created'" @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
-            <span class="btn-icon">📤</span>
-            {{ sending ? 'Sending...' : 'Send' }}
-          </button>
-          <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
-            <span class="btn-icon">🗑️</span>
-            Delete
-          </button>
+      <div v-else class="forms-grid">
+        <div v-for="form in draftForms" :key="form._id" class="form-card card">
+          <div class="form-card-header">
+            <div class="form-icon">📝</div>
+            <div class="form-status-badge">
+              <span class="badge badge-draft">Draft</span>
+            </div>
+          </div>
+          
+          <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
+          
+          <div class="form-meta">
+            <div class="meta-item">
+              <span class="meta-icon">❓</span>
+              <span>{{ form.questions.length }} questions</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <span>{{ formatDate(form.createdDate) }}</span>
+            </div>
+            <div v-if="form.teamId" class="meta-item">
+              <span class="meta-icon">👥</span>
+              <span>{{ getTeamName(form.teamId) }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button @click="previewFormTemplate(form)" class="btn-action btn-view">
+              <span class="btn-icon">👁️</span>
+              View
+            </button>
+            <button @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
+              <span class="btn-icon">📤</span>
+              {{ sending ? 'Sending...' : 'Send' }}
+            </button>
+            <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
+              <span class="btn-icon">🗑️</span>
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Sent Forms Tab -->
+    <div v-if="activeTab === 'sent'">
+      <div v-if="sentForms.length === 0" class="empty-state card">
+        <div class="empty-icon">📤</div>
+        <h3>No sent forms</h3>
+        <p class="text-secondary">Send your draft forms to see them here</p>
+        <router-link v-if="draftForms.length > 0" to="/forms/new">
+          <GradientButton>Create Form</GradientButton>
+        </router-link>
+      </div>
+
+      <div v-else class="forms-grid">
+        <div v-for="form in sentForms" :key="form._id" class="form-card card">
+          <div class="form-card-header">
+            <div class="form-icon">📤</div>
+            <div class="form-status-badge">
+              <span v-if="form.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
+              <span v-else class="badge badge-sent">✓ Sent</span>
+            </div>
+          </div>
+          
+          <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
+          
+          <div class="form-meta">
+            <div class="meta-item">
+              <span class="meta-icon">❓</span>
+              <span>{{ form.questions.length }} questions</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <span>{{ formatDate(form.createdDate) }}</span>
+            </div>
+            <div v-if="form.teamId" class="meta-item">
+              <span class="meta-icon">👥</span>
+              <span>{{ getTeamName(form.teamId) }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button @click="previewFormTemplate(form)" class="btn-action btn-view">
+              <span class="btn-icon">👁️</span>
+              View
+            </button>
+            <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
+              <span class="btn-icon">🗑️</span>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <transition name="modal">
+      <div v-if="previewingForm" class="modal-overlay" @click.self="closePreview">
+        <div class="modal modal-preview">
+          <div class="modal-header">
+            <div>
+              <h2>{{ previewingForm.name || 'Untitled Form' }}</h2>
+            </div>
+            <button @click="closePreview" class="btn-close" title="Close">
+              <span>✕</span>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="preview-badge">
+              <span class="badge-icon">👁️</span>
+              <span>Preview Mode - This is how your form will appear to reviewers</span>
+            </div>
+            
+            <FeedbackForm 
+              :questions="previewingForm.questions"
+              :show-submit-button="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { sendEmail } from '@/services/emailService';
+import type { FeedbackFormDraft } from '@/types';
 
-const router = useRouter();
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
 
@@ -82,11 +185,19 @@ const { forms } = formsStore;
 const { teams } = teamsStore;
 
 const sending = ref(false);
+const previewingForm = ref<FeedbackFormDraft | null>(null);
+const activeTab = ref<'drafts' | 'sent'>('drafts');
 
-const sortedForms = computed(() => {
-  return [...forms.value].sort((a, b) => {
-    return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
-  });
+const draftForms = computed(() => {
+  return forms.value
+    .filter(form => form.status === 'Created')
+    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+});
+
+const sentForms = computed(() => {
+  return forms.value
+    .filter(form => form.status === 'Sent' || form.status === 'Completed')
+    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
 });
 
 const getTeamName = (teamId?: string) => {
@@ -103,11 +214,12 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const previewForm = (formId: string) => {
-  router.push({
-    path: `/form/${formId}`,
-    query: { preview: 'true' }
-  });
+const previewFormTemplate = (form: FeedbackFormDraft) => {
+  previewingForm.value = form;
+};
+
+const closePreview = () => {
+  previewingForm.value = null;
 };
 
 const deleteForm = (formId: string) => {
@@ -207,6 +319,67 @@ Thank you!`,
   color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
+}
+
+/* Tabs */
+.tabs-container {
+  margin-bottom: 2rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(126, 162, 170, 0.05);
+  padding: 0.375rem;
+  border-radius: 12px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 2px solid rgba(138, 155, 104, 0.5);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text);
+}
+
+.tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-icon {
+  font-size: 1.125rem;
+}
+
+.tab-count {
+  background: var(--primary);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+.tab:not(.active) .tab-count {
+  background: var(--text-secondary);
 }
 
 .empty-state {
@@ -392,5 +565,143 @@ Thank you!`,
 
 .btn-icon {
   font-size: 1rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2rem;
+  border-bottom: 2px solid var(--border);
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.modal-header h2 {
+  margin: 0 0 0.25rem 0;
+  color: var(--title-primary);
+}
+
+.modal-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.btn-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-close:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.preview-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(66, 122, 161, 0.1), rgba(126, 162, 170, 0.1));
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.badge-icon {
+  font-size: 1.25rem;
+}
+
+.preview-actions {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.btn-secondary {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  transform: translateY(-2px);
+}
+
+/* Modal transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal,
+.modal-leave-active .modal {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal,
+.modal-leave-to .modal {
+  transform: scale(0.9) translateY(20px);
 }
 </style>
