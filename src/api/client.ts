@@ -165,6 +165,19 @@ export const orgGraph = {
 
   deleteTeam(data: API.DeleteTeamRequest) {
     return http.post<void>('/OrgGraph/deleteTeam', data);
+  },
+
+  // Update team information
+  updateTeamInfo(data: {
+    teamId: string;
+    updates: {
+      name?: string;
+      members?: string[];
+      membersWithRoles?: Array<{ memberId: string; role: string }>;
+    };
+    owner?: string;
+  }) {
+    return http.post<void>('/OrgGraph/updateTeamInfo', data);
   }
 };
 

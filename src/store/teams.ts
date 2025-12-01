@@ -155,16 +155,32 @@ export function useTeamsStore() {
   }
 
   async function updateTeam(updated: Team) {
-    const index = teams.value.findIndex((t: Team) => t._id === updated._id);
-    if (index !== -1) {
-      teams.value[index] = { ...updated };
-      
-      // Update localStorage cache
-      const storageKey = `hrTeams_${currentAdminId.value}`;
-      localStorage.setItem(storageKey, JSON.stringify(teams.value));
-      
-      // TODO: Add backend update call when API endpoint is available
-      // await orgGraph.updateTeam({ teamId: updated._id, updates: updated });
+    try {
+      // Update in backend first
+      await orgGraph.updateTeamInfo({
+        teamId: updated._id,
+        updates: {
+          name: updated.name,
+          members: updated.members,
+          membersWithRoles: updated.membersWithRoles
+        },
+        owner: currentAdminId.value ?? undefined
+      });
+
+      // Update local state after successful backend update
+      const index = teams.value.findIndex((t: Team) => t._id === updated._id);
+      if (index !== -1) {
+        teams.value[index] = { ...updated };
+        
+        // Update localStorage cache
+        const storageKey = `hrTeams_${currentAdminId.value}`;
+        localStorage.setItem(storageKey, JSON.stringify(teams.value));
+      }
+    } catch (error) {
+      console.error('Error updating team in backend:', error);
+      // On failure, reload from backend to resync state
+      await loadTeamsFromBackend();
+      throw error; // Re-throw to let the UI handle the error
     }
   }
 
