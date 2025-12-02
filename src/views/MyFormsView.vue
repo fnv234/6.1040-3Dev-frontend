@@ -69,14 +69,36 @@
             </div>
           </div>
 
+          <!-- Team Members Section -->
+          <div v-if="form.teamId && getTeamMembers(form.teamId).length > 0" class="team-members-section">
+            <h4 class="members-title">Team Members</h4>
+            <div class="members-list">
+              <div v-for="member in getTeamMembers(form.teamId)" :key="member.memberId" class="member-item">
+                <div class="member-info">
+                  <span class="member-name">{{ member.memberId }}</span>
+                  <span class="member-role">{{ member.role }}</span>
+                  <span class="member-email">{{ member.email }}</span>
+                </div>
+                <button 
+                  @click="sendEmailToMember(form, member)" 
+                  class="btn-email"
+                  :disabled="sending"
+                  :title="`Send access code to ${member.email}`"
+                >
+                  <span class="btn-icon">�</span>
+                  <span class="access-code" v-if="getStoredAccessCode(form._id!, member.memberId)">
+                    {{ getStoredAccessCode(form._id!, member.memberId) }}
+                  </span>
+                  <span v-else>Email</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button @click="previewFormTemplate(form)" class="btn-action btn-view">
               <span class="btn-icon">👁️</span>
               View
-            </button>
-            <button @click="sendForm(form._id!)" class="btn-action btn-send" :disabled="sending">
-              <span class="btn-icon">📤</span>
-              {{ sending ? 'Sending...' : 'Send' }}
             </button>
             <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
               <span class="btn-icon">🗑️</span>
@@ -125,6 +147,32 @@
             </div>
           </div>
 
+          <!-- Team Members Section for Sent Forms -->
+          <div v-if="form.teamId && getTeamMembers(form.teamId).length > 0" class="team-members-section">
+            <h4 class="members-title">Team Members</h4>
+            <div class="members-list">
+              <div v-for="member in getTeamMembers(form.teamId)" :key="member.memberId" class="member-item">
+                <div class="member-info">
+                  <span class="member-name">{{ member.memberId }}</span>
+                  <span class="member-role">{{ member.role }}</span>
+                  <span class="member-email">{{ member.email }}</span>
+                </div>
+                <button 
+                  @click="sendEmailToMember(form, member)" 
+                  class="btn-email"
+                  :disabled="sending"
+                  :title="`Send access code to ${member.email}`"
+                >
+                  <span class="btn-icon">📧</span>
+                  <span class="access-code" v-if="getStoredAccessCode(form._id!, member.memberId)">
+                    {{ getStoredAccessCode(form._id!, member.memberId) }}
+                  </span>
+                  <span v-else>Email</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button @click="previewFormTemplate(form)" class="btn-action btn-view">
               <span class="btn-icon">👁️</span>
@@ -170,19 +218,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { sendEmail } from '@/services/emailService';
-import type { FeedbackFormDraft } from '@/types';
+import { generateAccessCode, createAccessCodeEmailBody, createMailtoLink } from '@/utils/accessCode';
+import type { FeedbackFormDraft, TeamMember } from '@/types';
 
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
 
-const { forms } = formsStore;
+const { forms, getAccessCode, setAccessCode, loadAccessCodesFromStorage } = formsStore;
 const { teams } = teamsStore;
+
+// Load access codes on component mount
+onMounted(() => {
+  loadAccessCodesFromStorage();
+});
 
 const sending = ref(false);
 const previewingForm = ref<FeedbackFormDraft | null>(null);
@@ -204,6 +258,16 @@ const getTeamName = (teamId?: string) => {
   if (!teamId) return 'No team';
   const team = teams.value.find(t => t._id === teamId);
   return team?.name || 'Unknown team';
+};
+
+const getTeamMembers = (teamId?: string): TeamMember[] => {
+  if (!teamId) return [];
+  const team = teams.value.find(t => t._id === teamId);
+  return team?.membersWithRoles || [];
+};
+
+const getStoredAccessCode = (formId: string, memberId: string): string | null => {
+  return getAccessCode(formId, memberId);
 };
 
 const formatDate = (dateStr: string) => {
@@ -228,75 +292,52 @@ const deleteForm = (formId: string) => {
   }
 };
 
-const sendForm = async (formId: string) => {
-  const form = forms.value.find(f => f._id === formId);
-  if (!form || !form.teamId) {
-    alert('Cannot send form: No team assigned');
+const sendEmailToMember = async (form: FeedbackFormDraft, member: TeamMember) => {
+  if (!form._id || !form.teamId) {
+    alert('Cannot send email: Form ID or team not found');
     return;
   }
 
   const team = teams.value.find(t => t._id === form.teamId);
   if (!team) {
-    alert('Cannot send form: Team not found');
+    alert('Cannot send email: Team not found');
     return;
   }
 
-  if (team.members.length < 2) {
-    alert('Cannot send form: Team must have at least 2 members for peer feedback');
-    return;
-  }
-
-  if (confirm(`Send this form to all ${team.members.length} members of ${team.name}?`)) {
-    sending.value = true;
-    try {
-      // Send email to each team member individually
-      const emailPromises = team.members.map(async (email: string) => {
-        const formLink = `${window.location.origin}/form/${formId}`;
-        const emailData = {
-          to: email,
-          subject: `New Feedback Form: ${form.name || 'Feedback Form'}`,
-          body: `Hello,
-
-You've been requested to provide feedback for "${form.name || 'a form'}" in team "${team.name}".
-
-Please click the link below to access the feedback form:
-${formLink}
-
-Thank you!`,
-          formLink: formLink
-        };
-        console.log('Sending email with data:', emailData);
-        return sendEmail(emailData);
-      });
-      
-      const results = await Promise.allSettled(emailPromises);
-      const successfulEmails = results.filter(result => result.status === 'fulfilled' && result.value.success);
-      const failedEmails = team.members.filter((_, index) => 
-        results[index].status === 'rejected' || 
-        (results[index] as any).value?.success === false
-      );
-      
-      const emailResult = {
-        success: successfulEmails.length > 0,
-        emailsSent: successfulEmails.length,
-        failedEmails: failedEmails
-      };
-      
-      if (emailResult.success) {
-        alert(`Successfully sent ${emailResult.emailsSent} feedback forms to team members!`);
-        formsStore.sendForm(formId);
-      } else {
-        const failedMessage = emailResult.failedEmails?.length 
-          ? ` Failed to send to ${emailResult.failedEmails.length} members.` 
-          : '';
-        alert(`Sent ${emailResult.emailsSent} forms successfully.${failedMessage}`);
-      }
-    } catch (error: any) {
-      console.error('Error sending form:', error);
-      alert(error.message || 'Failed to send form. Please try again.');
-    } finally {
-      sending.value = false;
+  sending.value = true;
+  try {
+    // Check if we already have an access code for this member
+    let accessCode = getAccessCode(form._id, member.memberId);
+    
+    // If not, generate a new one
+    if (!accessCode) {
+      accessCode = generateAccessCode();
+      setAccessCode(form._id, member.memberId, accessCode);
     }
+
+    // Create personalized email body
+    const emailSubject = `Your Feedback Form Access Code: ${form.name || 'Feedback Form'}`;
+    const emailBody = createAccessCodeEmailBody(
+      form.name || 'Feedback Form',
+      team.name,
+      accessCode,
+      member.memberId
+    );
+
+    // Create mailto link for this specific member
+    const mailtoLink = createMailtoLink(emailSubject, [member.email], emailBody);
+    
+    // Open email client
+    window.open(mailtoLink, '_blank');
+    
+    // Show success message with the access code
+    alert(`Email opened for ${member.memberId} (${member.email})\n\nAccess Code: ${accessCode}\n\nPlease send the email from your email client.`);
+    
+  } catch (error: any) {
+    console.error('Error preparing email for member:', error);
+    alert(error.message || 'Failed to prepare email. Please try again.');
+  } finally {
+    sending.value = false;
   }
 };
 </script>
@@ -488,6 +529,103 @@ Thank you!`,
 
 .meta-icon {
   font-size: 1rem;
+}
+
+.team-members-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.members-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.member-role {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.member-email {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.btn-email {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #A0CA92, #8ABD7C);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.btn-email:hover:not(:disabled) {
+  background: linear-gradient(135deg, #8ABD7C, #7BA86E);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-email:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.access-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.6875rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
 }
 
 .form-actions {

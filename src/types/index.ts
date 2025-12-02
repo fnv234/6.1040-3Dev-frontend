@@ -8,6 +8,7 @@ export interface HRAdmin {
 export interface TeamMember {
   memberId: string; // Employee ID
   role: string; // e.g., "manager", "team lead", "developer", etc.
+  email: string; // Employee email address
 }
 
 export interface Team {

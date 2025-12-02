@@ -153,11 +153,11 @@ export const orgGraph = {
     return http.post<{ team: string }>('/OrgGraph/createTeam', data);
   },
 
-  // Create a team with explicit member roles
+  // Create a team with explicit member roles and emails
   createTeamWithRoles(data: {
     name: string;
     members?: string[];
-    membersWithRoles?: Array<{ memberId: string; role: string }>;
+    membersWithRoles?: Array<{ memberId: string; role: string; email: string }>;
     owner?: string;
   }) {
     return http.post<{ team: string }>('/OrgGraph/createTeamWithRoles', data);
@@ -173,7 +173,7 @@ export const orgGraph = {
     updates: {
       name?: string;
       members?: string[];
-      membersWithRoles?: Array<{ memberId: string; role: string }>;
+      membersWithRoles?: Array<{ memberId: string; role: string; email: string }>;
     };
     owner?: string;
   }) {

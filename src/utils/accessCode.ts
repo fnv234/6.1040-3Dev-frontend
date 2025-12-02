@@ -1,0 +1,71 @@
+/**
+ * Utility functions for generating and managing access codes
+ */
+
+/**
+ * Generate a unique access code
+ */
+export function generateAccessCode(): string {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).substring(2, 8);
+  return `${timestamp}-${randomPart}`.toUpperCase();
+}
+
+/**
+ * Generate unique access codes for team members
+ */
+export function generateTeamAccessCodes(teamMembers: Array<{memberId: string, email: string, role?: string}>): Array<{memberId: string, email: string, role?: string, accessCode: string}> {
+  return teamMembers.map(member => ({
+    ...member,
+    accessCode: generateAccessCode()
+  }));
+}
+
+/**
+ * Create email body with access code
+ */
+export function createAccessCodeEmailBody(
+  formName: string,
+  teamName: string,
+  accessCode: string,
+  recipientName?: string
+): string {
+  const greeting = recipientName ? `Hello ${recipientName},` : 'Hello,';
+  
+  return `${greeting}
+
+You've been invited to provide feedback for "${formName}" as a member of the "${teamName}" team.
+
+Your unique access code is: ${accessCode}
+
+To complete the feedback form:
+1. Go to the login page
+2. Click "Have an access code?"
+3. Enter your access code: ${accessCode}
+4. Complete the feedback form
+
+This access code is unique to you and should not be shared with others.
+
+Thank you for your participation!
+
+Best regards,
+HR Team`;
+}
+
+/**
+ * Create mailto link with recipients and body
+ */
+export function createMailtoLink(
+  subject: string,
+  emails: string[],
+  body: string,
+  useBcc = false
+): string {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedEmails = encodeURIComponent(emails.join(','));
+  const encodedBody = encodeURIComponent(body);
+  
+  const emailField = useBcc ? 'bcc' : 'to';
+  
+  return `mailto:?subject=${encodedSubject}&${emailField}=${encodedEmails}&body=${encodedBody}`;
+}

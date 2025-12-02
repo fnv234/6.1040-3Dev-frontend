@@ -7,7 +7,11 @@
 
     <div class="org-upload card">
       <h2>Upload Org Chart</h2>
-      <p class="text-secondary">
+      <p class="text-sconst closeModal = () => {
+  showCreateModal.value = false;
+  editingTeam.value = null;
+  formData.value = { name: '', members: [], membersWithRoles: [] };
+};ary">
         Upload a JSON file with your employee roster to let OrgGraph infer team hierarchies.
         Expected format:
         <code>{ "employees": [{ "id": "emp001", "manager": "mgr001", "teamName": "Engineering" }, ...] }</code>
@@ -40,8 +44,11 @@
           <div v-if="team.membersWithRoles && team.membersWithRoles.length > 0">
             <ul class="member-list-with-roles">
               <li v-for="(member, idx) in team.membersWithRoles" :key="idx" class="member-with-role">
-                <span class="member-id">{{ member.memberId }}</span>
-                <span class="member-role">{{ member.role }}</span>
+                <div class="member-info">
+                  <span class="member-id">{{ member.memberId }}</span>
+                  <span class="member-role">{{ member.role }}</span>
+                </div>
+                <span class="member-email">{{ member.email }}</span>
               </li>
             </ul>
           </div>
@@ -79,6 +86,17 @@
               required
             />
           </div>
+
+          <div class="form-group">
+            <label class="label" for="teamEmail">Team Email (Optional)</label>
+            <input
+              id="teamEmail"
+              v-model="formData.email"
+              type="email"
+              class="input"
+              placeholder="e.g., engineering@company.com"
+            />
+          </div>
           
           <div class="form-group">
             <label class="label">Team Members with Roles</label>
@@ -101,6 +119,13 @@
                       type="text"
                       class="input member-role-input"
                       placeholder="Role (e.g., manager, team lead)"
+                      required
+                    />
+                    <input
+                      v-model="member.email"
+                      type="email"
+                      class="input member-email-input"
+                      placeholder="Email (e.g., emp001@company.com)"
                       required
                     />
                   </div>
@@ -157,7 +182,7 @@ const editingTeam = ref<Team | null>(null);
 const formData = ref({
   name: '',
   members: [] as string[],
-  membersWithRoles: [] as Array<{memberId: string, role: string}>
+  membersWithRoles: [] as Array<{memberId: string, role: string, email: string}>
 });
 
 const memberIdsText = computed({
@@ -171,7 +196,7 @@ const memberIdsText = computed({
 });
 
 const addMemberWithRole = () => {
-  formData.value.membersWithRoles.push({ memberId: '', role: '' });
+  formData.value.membersWithRoles.push({ memberId: '', role: '', email: '' });
 };
 
 const removeMemberWithRole = (index: number) => {
@@ -300,14 +325,14 @@ const saveTeam = async () => {
       ...editingTeam.value,
       name: formData.value.name,
       members: uniqueMembers,
-      membersWithRoles: formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '')
+      membersWithRoles: formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '' && m.email.trim() !== '')
     };
     updateTeam(updated);
   } else {
     createTeamWithRoles(
       formData.value.name, 
       uniqueMembers, 
-      formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '')
+      formData.value.membersWithRoles.filter(m => m.memberId.trim() !== '' && m.role.trim() !== '' && m.email.trim() !== '')
     );
   }
 
@@ -392,6 +417,12 @@ const deleteTeam = (teamId: string) => {
 
 .team-info h3 {
   margin-bottom: 0.25rem;
+}
+
+.team-email {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
 }
 
 .team-members {
@@ -506,6 +537,11 @@ const deleteTeam = (teamId: string) => {
   min-width: 0;
 }
 
+.member-email-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .btn-remove {
   background: var(--error);
   color: white;
@@ -539,6 +575,12 @@ const deleteTeam = (teamId: string) => {
   border-bottom: none;
 }
 
+.member-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .member-id {
   font-weight: 600;
   color: var(--text-primary);
@@ -551,5 +593,11 @@ const deleteTeam = (teamId: string) => {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--border);
+}
+
+.member-email {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 </style>

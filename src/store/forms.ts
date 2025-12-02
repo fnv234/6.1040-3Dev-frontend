@@ -7,6 +7,9 @@ const forms = ref<FeedbackFormDraft[]>([]);
 const loading = ref(false);
 const loaded = ref(false);
 
+// Store access codes for each form and team member
+const formAccessCodes = ref<Record<string, Record<string, string>>>({});
+
 export const useFormsStore = () => {
   const auth = useAuthStore();
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
@@ -142,6 +145,36 @@ export const useFormsStore = () => {
     }
   };
 
+  // Access code management functions
+  const getAccessCode = (formId: string, memberId: string): string | null => {
+    return formAccessCodes.value[formId]?.[memberId] || null;
+  };
+
+  const setAccessCode = (formId: string, memberId: string, accessCode: string): void => {
+    if (!formAccessCodes.value[formId]) {
+      formAccessCodes.value[formId] = {};
+    }
+    formAccessCodes.value[formId][memberId] = accessCode;
+    
+    // Save to localStorage
+    if (storageKey.value) {
+      const accessCodesKey = storageKey.value + '_access_codes';
+      localStorage.setItem(accessCodesKey, JSON.stringify(formAccessCodes.value));
+    }
+  };
+
+  const loadAccessCodesFromStorage = () => {
+    if (!storageKey.value) return;
+    
+    const accessCodesKey = storageKey.value + '_access_codes';
+    const raw = localStorage.getItem(accessCodesKey);
+    try {
+      formAccessCodes.value = raw ? JSON.parse(raw) : {};
+    } catch {
+      formAccessCodes.value = {};
+    }
+  };
+
   return {
     forms,
     loading,
@@ -150,5 +183,8 @@ export const useFormsStore = () => {
     deleteForm,
     getFormById,
     sendForm,
+    getAccessCode,
+    setAccessCode,
+    loadAccessCodesFromStorage,
   };
 };
