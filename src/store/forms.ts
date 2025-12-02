@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import type { FeedbackFormDraft } from '@/types';
+import type { FeedbackFormDraft, FeedbackQuestion } from '@/types';
 import { useAuthStore } from './auth';
 import { formTemplate as formTemplateAPI } from '@/api/client';
 
@@ -175,6 +175,139 @@ export const useFormsStore = () => {
     }
   };
 
+  // API functions for form responses and access codes
+  const getFormByAccessCode = async (accessCode: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/AccessCode/getAccessCodeInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessCode }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid access code');
+      }
+
+      const { accessCodeInfo } = await response.json();
+      
+      // Get the form template
+      const formResponse = await fetch(`http://localhost:8000/api/FormTemplate/getTemplate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ templateId: accessCodeInfo.formId }),
+      });
+
+      if (!formResponse.ok) {
+        throw new Error('Form not found');
+      }
+
+      const { template } = await formResponse.json();
+      
+      return {
+        accessCodeInfo,
+        form: template,
+      };
+    } catch (error) {
+      console.error('Error getting form by access code:', error);
+      throw error;
+    }
+  };
+
+  const getQuestionsForRole = async (formTemplate: any, memberRole: string | null) => {
+    try {
+      // Filter questions based on role targeting (client-side filtering)
+      const allQuestions = formTemplate.questions || [];
+      
+      const filteredQuestions = allQuestions.filter((question: any) => {
+        // If no target roles specified, show to everyone
+        if (!question.targetRoles || question.targetRoles.length === 0) {
+          return true;
+        }
+
+        // If member has no role, don't show role-targeted questions
+        if (!memberRole) {
+          return false;
+        }
+
+        // Show question if member's role is in the target roles
+        return question.targetRoles.includes(memberRole);
+      });
+
+      return filteredQuestions;
+    } catch (error) {
+      console.error('Error getting questions for role:', error);
+      throw error;
+    }
+  };
+
+  const submitFormResponse = async (accessCode: string, responses: Record<number, string>) => {
+    try {
+      console.log('Submitting form response:', { accessCode, responses });
+      
+      const response = await fetch(`http://localhost:8000/api/AccessCode/submitFormResponse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          accessCode,
+          responses 
+        }),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response OK:', response.ok);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backend error response:', errorData);
+        throw new Error(errorData.error || 'Failed to submit form response');
+      }
+
+      const result = await response.json();
+      console.log('Successful response:', result);
+      
+      const { responseId } = result;
+      return responseId;
+    } catch (error) {
+      console.error('Error submitting form response:', error);
+      throw error;
+    }
+  };
+
+  const getFormResponses = async (formId: string) => {
+    if (!currentAdminId.value) {
+      throw new Error('No current admin');
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/AccessCode/getFormResponses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          formId,
+          createdBy: currentAdminId.value 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get form responses');
+      }
+
+      const { responses } = await response.json();
+      return responses;
+    } catch (error) {
+      console.error('Error getting form responses:', error);
+      throw error;
+    }
+  };
+
   return {
     forms,
     loading,
@@ -186,5 +319,9 @@ export const useFormsStore = () => {
     getAccessCode,
     setAccessCode,
     loadAccessCodesFromStorage,
+    getFormByAccessCode,
+    getQuestionsForRole,
+    submitFormResponse,
+    getFormResponses,
   };
 };

@@ -10,6 +10,7 @@
           <router-link to="/teams" class="nav-link">Teams</router-link>
           <router-link to="/forms" class="nav-link">My Forms</router-link>
           <router-link to="/forms/new" class="nav-link">Create Form</router-link>
+          <router-link to="/responses" class="nav-link">Responses</router-link>
           <GradientButton @click="handleLogout" variant="variant">Logout</GradientButton>
         </div>
       </div>

@@ -6,6 +6,7 @@ import FormBuilderView from '@/views/FormBuilderView.vue';
 import MyFormsView from '@/views/MyFormsView.vue';
 import FormAnswerView from '@/views/FormAnswerView.vue';
 import AccessCodeFormView from '@/views/AccessCodeFormView.vue';
+import FormResponsesView from '@/views/FormResponsesView.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -50,6 +51,12 @@ const routes: RouteRecordRaw[] = [
     path: '/access-form/:code',
     name: 'AccessCodeForm',
     component: AccessCodeFormView
+  },
+  {
+    path: '/responses',
+    name: 'FormResponses',
+    component: FormResponsesView,
+    meta: { requiresAuth: true }
   },
 
   // Gradient button demo route removed (component no longer exists)

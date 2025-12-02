@@ -223,15 +223,18 @@ import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
+import { useAuthStore } from '@/store/auth';
 import { sendEmail } from '@/services/emailService';
 import { generateAccessCode, createAccessCodeEmailBody, createMailtoLink } from '@/utils/accessCode';
 import type { FeedbackFormDraft, TeamMember } from '@/types';
 
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
+const authStore = useAuthStore();
 
 const { forms, getAccessCode, setAccessCode, loadAccessCodesFromStorage } = formsStore;
 const { teams } = teamsStore;
+const currentAdminId = computed(() => authStore.currentAdmin.value?._id);
 
 // Load access codes on component mount
 onMounted(() => {
@@ -309,10 +312,32 @@ const sendEmailToMember = async (form: FeedbackFormDraft, member: TeamMember) =>
     // Check if we already have an access code for this member
     let accessCode = getAccessCode(form._id, member.memberId);
     
-    // If not, generate a new one
+    // If not, generate a new one and store it in backend
     if (!accessCode) {
       accessCode = generateAccessCode();
       setAccessCode(form._id, member.memberId, accessCode);
+      
+      // Store access code in backend
+      try {
+        await fetch(`http://localhost:8000/api/AccessCode/createAccessCode`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            accessCode,
+            formId: form._id,
+            teamId: form.teamId,
+            memberId: member.memberId,
+            memberEmail: member.email,
+            memberRole: member.role,
+            createdBy: currentAdminId.value,
+          }),
+        });
+      } catch (backendError) {
+        console.error('Failed to store access code in backend:', backendError);
+        // Continue anyway with local storage
+      }
     }
 
     // Create personalized email body
