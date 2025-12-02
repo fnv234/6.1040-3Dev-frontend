@@ -9,7 +9,8 @@
         <h1>360 Feedback Admin</h1>
         <p class="text-secondary">HR Administration Portal</p>
         
-        <form @submit.prevent="handleSubmit" class="login-form">
+        <!-- Login/Signup Form -->
+        <form v-if="entryMode === 'auth'" @submit.prevent="handleSubmit" class="login-form">
           <div class="form-group">
             <label class="label" for="email">Email</label>
             <input
@@ -41,8 +42,40 @@
             {{ loading ? (mode === 'login' ? 'Logging in...' : 'Creating account...') : (mode === 'login' ? 'Login' : 'Create Account') }}
           </GradientButton>
         </form>
+
+        <!-- Access Code Form -->
+        <form v-if="entryMode === 'access'" @submit.prevent="handleAccessCodeSubmit" class="access-code-form">
+          <div class="form-group">
+            <label class="label" for="accessCode">Access Code</label>
+            <input
+              id="accessCode"
+              v-model="accessCode"
+              type="text"
+              class="input"
+              placeholder="Enter your access code"
+              required
+            />
+          </div>
+          
+          <p v-if="accessCodeError" class="text-error">{{ accessCodeError }}</p>
+          <br>
+          
+          <GradientButton type="submit" :disabled="accessCodeLoading">
+            {{ accessCodeLoading ? 'Accessing...' : 'Access Form' }}
+          </GradientButton>
+        </form>
         
-        <div class="demo-info">
+        <div class="mode-toggle">
+          <p class="text-secondary">
+            <small>
+              <button type="button" class="link-button" @click="toggleEntryMode">
+                {{ entryMode === 'auth' ? 'Have an access code?' : 'Back to login' }}
+              </button>
+            </small>
+          </p>
+        </div>
+
+        <div v-if="entryMode === 'auth'" class="demo-info">
           <p class="text-secondary">
             <small>
               {{ mode === 'login' ? 'Need an account?' : 'Already have an account?' }}
@@ -73,11 +106,23 @@ const password = ref('');
 const loading = ref(false);
 const error = ref('');
 
+// Access code functionality
+const accessCode = ref('');
+const accessCodeLoading = ref(false);
+const accessCodeError = ref('');
+const entryMode = ref<'auth' | 'access'>('auth');
+
 const mode = ref<'login' | 'signup'>('login');
 
 const toggleMode = () => {
   error.value = '';
   mode.value = mode.value === 'login' ? 'signup' : 'login';
+};
+
+const toggleEntryMode = () => {
+  error.value = '';
+  accessCodeError.value = '';
+  entryMode.value = entryMode.value === 'auth' ? 'access' : 'auth';
 };
 
 const handleSubmit = async () => {
@@ -97,6 +142,27 @@ const handleSubmit = async () => {
     error.value = e.message || 'A login error occurred. Please try again.';
   } finally {
     loading.value = false;
+  }
+};
+
+const handleAccessCodeSubmit = async () => {
+  accessCodeLoading.value = true;
+  accessCodeError.value = '';
+  
+  try {
+    // Basic validation
+    if (!accessCode.value.trim()) {
+      accessCodeError.value = 'Please enter an access code';
+      return;
+    }
+    
+    // For now, accept any non-empty access code
+    // In the future, this could validate against a backend service
+    router.push(`/access-form/${encodeURIComponent(accessCode.value.trim())}`);
+  } catch (e: any) {
+    accessCodeError.value = e.message || 'Invalid access code. Please try again.';
+  } finally {
+    accessCodeLoading.value = false;
   }
 };
 </script>
@@ -151,14 +217,22 @@ const handleSubmit = async () => {
   color: var(--title-primary);
 }
 
-.login-form {
+.login-form,
+.access-code-form {
   margin-top: 2rem;
   text-align: left;
 }
 
-.login-form .btn {
+.login-form .btn,
+.access-code-form .btn {
   width: 100%;
   margin-top: 0.5rem;
+}
+
+.mode-toggle {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
 
 .demo-info {
