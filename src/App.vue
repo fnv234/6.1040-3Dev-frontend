@@ -43,7 +43,7 @@ const handleLogout = () => {
 
 <style scoped>
 .navbar {
-  background: rgba(9, 90, 128, 0.95);
+  background: rgba(81, 147, 248, 1);
   border-bottom: 1px solid var(--border);
   padding: 1rem 0;
   margin-bottom: 2rem;

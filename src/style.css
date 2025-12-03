@@ -169,7 +169,8 @@
     --spread-y: 105%;
     /* slightly warmer, deeper hover tones from palette */
     --color-1: var(--primary-hover);
-    --color-2: #427AA1;
+    /* --color-2: #427AA1; */
+    --color-2: #99d6e9;
     --color-3: #7EA2AA;
     --color-4: #998650;
     --color-5: #937B63;
@@ -241,7 +242,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-secondary);
+  background: rgba(214, 182, 245, 0.754);
+  /* background: var(--bg-secondary); */
   color: var(--text);
   line-height: 1.6;
 }

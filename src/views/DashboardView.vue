@@ -171,7 +171,7 @@ const initChart = () => {
       datasets: [{
         label: 'Response Rate (%)',
         data: chartData.value.data,
-        backgroundColor: 'rgba(126, 162, 170, 0.7)',
+        backgroundColor: 'rgba(108, 222, 247, 0.7)',
         borderColor: 'rgba(66, 122, 161, 1)',
         borderWidth: 2,
         borderRadius: 6
@@ -239,7 +239,7 @@ const regenerateSummary = async (teamId: string) => {
 
 .stat-card {
   text-align: center;
-  background: rgba(50, 45, 32, 0.95);
+  background: rgba(199, 233, 245, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -274,7 +274,7 @@ const regenerateSummary = async (teamId: string) => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  background: rgba(50, 45, 32, 0.95);
+  background: rgba(199, 233, 245, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -291,7 +291,7 @@ const regenerateSummary = async (teamId: string) => {
 
 .team-card {
   padding: 1.5rem;
-  background: rgba(50, 45, 32, 0.95);
+  background: rgba(199, 233, 245, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -366,7 +366,7 @@ const regenerateSummary = async (teamId: string) => {
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
-  background: rgba(50, 45, 32, 0.95);
+  background: rgba(199, 233, 245, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
@@ -375,7 +375,7 @@ const regenerateSummary = async (teamId: string) => {
 .action-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-  border-color: rgba(126, 162, 170, 0.7);
+  border-color: rgba(108, 222, 247, 0.7);
 }
 
 .action-card h3 {

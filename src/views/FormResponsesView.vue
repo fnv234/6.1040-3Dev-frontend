@@ -3,7 +3,7 @@
     <div class="responses-header">
       <h1>Form Responses</h1>
       <p class="text-secondary">
-        View and analyze feedback responses from your team members.
+        View and analyze feedback responses that have been submitted.
       </p>
     </div>
 
@@ -135,12 +135,7 @@
       </div>
 
       <!-- No Form Selected -->
-      <div v-else-if="forms.length > 0" class="no-selection-state">
-        <h3>Select a form to view responses</h3>
-        <p class="text-secondary">
-          Choose one of your forms from the dropdown above to see the responses.
-        </p>
-      </div>
+      
 
       <!-- No Forms -->
       

@@ -12,24 +12,7 @@
 
     <!-- Tabs -->
     <div class="tabs-container">
-      <div class="tabs">
-        <button 
-          @click="activeTab = 'drafts'" 
-          :class="['tab', { active: activeTab === 'drafts' }]"
-        >
-          <span class="tab-icon">📝</span>
-          My Drafts
-          <span class="tab-count">{{ draftForms.length }}</span>
-        </button>
-        <button 
-          @click="activeTab = 'sent'" 
-          :class="['tab', { active: activeTab === 'sent' }]"
-        >
-          <span class="tab-icon">📤</span>
-          Sent Forms
-          <span class="tab-count">{{ sentForms.length }}</span>
-        </button>
-      </div>
+      
     </div>
 
     <!-- My Drafts Tab -->
@@ -47,9 +30,7 @@
         <div v-for="form in draftForms" :key="form._id" class="form-card card">
           <div class="form-card-header">
             <div class="form-icon">📝</div>
-            <div class="form-status-badge">
-              <span class="badge badge-draft">Draft</span>
-            </div>
+            
           </div>
           
           <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
@@ -109,83 +90,7 @@
       </div>
     </div>
 
-    <!-- Sent Forms Tab -->
-    <div v-if="activeTab === 'sent'">
-      <div v-if="sentForms.length === 0" class="empty-state card">
-        <div class="empty-icon">📤</div>
-        <h3>No sent forms</h3>
-        <p class="text-secondary">Send your draft forms to see them here</p>
-        <router-link v-if="draftForms.length > 0" to="/forms/new">
-          <GradientButton>Create Form</GradientButton>
-        </router-link>
-      </div>
-
-      <div v-else class="forms-grid">
-        <div v-for="form in sentForms" :key="form._id" class="form-card card">
-          <div class="form-card-header">
-            <div class="form-icon">📤</div>
-            <div class="form-status-badge">
-              <span v-if="form.status === 'Completed'" class="badge badge-completed">✓ Completed</span>
-              <span v-else class="badge badge-sent">✓ Sent</span>
-            </div>
-          </div>
-          
-          <h3 class="form-title">{{ form.name || 'Untitled Form' }}</h3>
-          
-          <div class="form-meta">
-            <div class="meta-item">
-              <span class="meta-icon">❓</span>
-              <span>{{ form.questions.length }} questions</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-icon">📅</span>
-              <span>{{ formatDate(form.createdDate) }}</span>
-            </div>
-            <div v-if="form.teamId" class="meta-item">
-              <span class="meta-icon">👥</span>
-              <span>{{ getTeamName(form.teamId) }}</span>
-            </div>
-          </div>
-
-          <!-- Team Members Section for Sent Forms -->
-          <div v-if="form.teamId && getTeamMembers(form.teamId).length > 0" class="team-members-section">
-            <h4 class="members-title">Team Members</h4>
-            <div class="members-list">
-              <div v-for="member in getTeamMembers(form.teamId)" :key="member.memberId" class="member-item">
-                <div class="member-info">
-                  <span class="member-name">{{ member.memberId }}</span>
-                  <span class="member-role">{{ member.role }}</span>
-                  <span class="member-email">{{ member.email }}</span>
-                </div>
-                <button 
-                  @click="sendEmailToMember(form, member)" 
-                  class="btn-email"
-                  :disabled="sending"
-                  :title="`Send access code to ${member.email}`"
-                >
-                  <span class="btn-icon">📧</span>
-                  <span class="access-code" v-if="getStoredAccessCode(form._id!, member.memberId)">
-                    {{ getStoredAccessCode(form._id!, member.memberId) }}
-                  </span>
-                  <span v-else>Email</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button @click="previewFormTemplate(form)" class="btn-action btn-view">
-              <span class="btn-icon">👁️</span>
-              View
-            </button>
-            <button @click="deleteForm(form._id!)" class="btn-action btn-delete">
-              <span class="btn-icon">🗑️</span>
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Preview Modal -->
     <transition name="modal">
