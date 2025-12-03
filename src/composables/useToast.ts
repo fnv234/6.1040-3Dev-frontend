@@ -34,20 +34,17 @@ export function useToast() {
     }
   };
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    let color: Toast['color'] = 'blue';
-
-    if (type === 'success') {
-      color = 'green';
-    } else if (type === 'error') {
-      color = 'red';
-    } else {
-      color = 'blue';
-    }
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    const colorMap = {
+      success: 'green' as const,
+      error: 'red' as const,
+      info: 'blue' as const,
+      warning: 'orange' as const
+    };
 
     add({
       title: message,
-      color,
+      color: colorMap[type]
     });
   };
 
@@ -55,6 +52,6 @@ export function useToast() {
     toasts,
     add,
     remove,
-    showToast,
+    showToast
   };
 }

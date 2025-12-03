@@ -143,15 +143,7 @@
       </div>
 
       <!-- No Forms -->
-      <div v-else class="no-forms-state">
-        <h3>No forms created yet</h3>
-        <p class="text-secondary">
-          You haven't created any forms yet. Create a form to start collecting feedback.
-        </p>
-        <GradientButton @click="goToForms">
-          Create Your First Form
-        </GradientButton>
-      </div>
+      
     </div>
   </div>
 </template>

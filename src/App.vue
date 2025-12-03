@@ -16,6 +16,7 @@
       </div>
     </nav>
     <router-view />
+    <ToastDisplay />
   </div>
 </template>
 
@@ -24,6 +25,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth';
 import GradientButton from '@/components/ui/GradientButton.vue';
+import ToastDisplay from '@/components/ui/ToastDisplay.vue';
 
 const router = useRouter()
 const route = useRoute()

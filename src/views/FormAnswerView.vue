@@ -71,7 +71,7 @@ import { useToast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
-const { add: showToast } = useToast();
+const { showToast } = useToast();
 
 const form = ref<any | null>(null);
 const loading = ref(true);
@@ -101,7 +101,7 @@ async function fetchForm() {
 
 async function handleSubmit(responses: any[]) {
   if (isPreviewMode.value) {
-    showToast({ title: 'This is preview mode. Submissions are disabled.', color: 'blue' });
+    showToast('This is preview mode. Submissions are disabled.', 'info');
     return;
   }
 
@@ -117,7 +117,7 @@ async function handleSubmit(responses: any[]) {
       responses: responseMap
     });
 
-    showToast({ title: 'Feedback submitted successfully!', color: 'green' });
+    showToast('Feedback submitted successfully!', 'success');
     
     // Redirect to a success page or forms list
     setTimeout(() => {
@@ -125,7 +125,7 @@ async function handleSubmit(responses: any[]) {
     }, 1500);
   } catch (err: any) {
     console.error('Error submitting form:', err);
-    showToast({ title: err.response?.data?.error || 'Failed to submit feedback. Please try again.', color: 'red' });
+    showToast(err.response?.data?.error || 'Failed to submit feedback. Please try again.', 'error');
   }
 }
 
@@ -145,7 +145,7 @@ function goBack() {
 
 function viewResponses() {
   // TODO: Implement view responses functionality
-  showToast({ title: 'View responses functionality coming soon!', color: 'blue' });
+  showToast('View responses functionality coming soon!', 'info');
 }
 </script>
 
