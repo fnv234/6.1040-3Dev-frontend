@@ -239,7 +239,7 @@ const regenerateSummary = async (teamId: string) => {
 
 .stat-card {
   text-align: center;
-  background: rgba(199, 233, 245, 0.45);
+  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -274,7 +274,7 @@ const regenerateSummary = async (teamId: string) => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  background: rgba(199, 233, 245, 0.45);
+  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -291,7 +291,7 @@ const regenerateSummary = async (teamId: string) => {
 
 .team-card {
   padding: 1.5rem;
-  background: rgba(199, 233, 245, 0.45);
+  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -366,7 +366,7 @@ const regenerateSummary = async (teamId: string) => {
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
-  background: rgba(199, 233, 245, 0.45);
+  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -217,14 +217,14 @@
 }
 
 :root {
-  --primary: #7EA2AA;        /* soft teal */
+  --primary: #555858;        /* soft teal */
   --primary-hover: #427AA1;  /* deeper blue accent */
-  --bg: #DBD0C4;             /* warm light background */
-  --bg-secondary: #ABC8C0;   /* soft mint secondary */
-  --border: #998650;         /* muted gold border */
-  --title-primary: #427AA1;  /* strong title color */
+  --bg: #e6e8f9;             /* warm light background */
+  --bg-secondary: #b0a1ff;   /* soft mint secondary */
+  --border: #000000;         /* black border */
+  --title-primary: #000000;  /* black title color */
   --text: #2C2C2C;
-  --text-secondary: #8A9B68; /* muted olive text */
+  --text-secondary: #020302; /* muted olive text */
   --success: #A0CA92;        /* success green */
   --warning: #67584a;        /* warm tan warning */
   --error: #5a4a3a;          /* earthy error tone */
@@ -237,7 +237,7 @@
 }
 
 body {
-  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -326,18 +326,21 @@ h1 {
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 1rem;
+  color: var(--title-primary);
 }
 
 h2 {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
+  color: var(--title-primary);
 }
 
 h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: var(--title-primary);
 }
 
 .text-secondary {

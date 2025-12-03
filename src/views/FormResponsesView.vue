@@ -148,10 +148,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
+import { useTeamsStore } from '@/store/teams';
 import { useToast } from '@/composables/useToast';
 
 const router = useRouter();
 const formsStore = useFormsStore();
+const teamsStore = useTeamsStore();
 const { showToast } = useToast();
 
 const loading = ref(true);
@@ -168,6 +170,12 @@ const selectedForm = computed(() =>
   forms.value.find(f => f._id === selectedFormId.value)
 );
 
+// Get team info for completion rate calculation
+const selectedTeam = computed(() => {
+  if (!selectedForm.value?.teamId) return null;
+  return teamsStore.teams.value.find(t => t._id === selectedForm.value?.teamId);
+});
+
 const uniqueRoles = computed(() => {
   const roles = responses.value
     .map(r => r.memberRole)
@@ -177,8 +185,14 @@ const uniqueRoles = computed(() => {
 
 const completionRate = computed(() => {
   if (!selectedForm.value) return 0;
-  // This is a simplified calculation - in a real app you'd compare against expected responses
-  return Math.min(100, Math.round((responses.value.length / 10) * 100));
+  
+  // Get the actual number of team members
+  const teamMemberCount = selectedTeam.value?.members?.length || 0;
+  
+  if (teamMemberCount === 0) return 0;
+  
+  // Calculate completion rate based on actual team size
+  return Math.min(100, Math.round((responses.value.length / teamMemberCount) * 100));
 });
 
 const filteredResponses = computed(() => {
@@ -311,7 +325,7 @@ const goToForms = () => {
 .form-selector {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(105, 98, 98, 0.05);
   border-radius: 8px;
 }
 
@@ -360,7 +374,7 @@ const goToForms = () => {
 .stat {
   text-align: center;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(249, 244, 244, 0.91);
   border-radius: 6px;
 }
 
@@ -404,7 +418,7 @@ const goToForms = () => {
 }
 
 .response-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(239, 239, 239, 0.91);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 1.5rem;
