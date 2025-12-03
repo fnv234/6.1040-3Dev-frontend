@@ -155,12 +155,6 @@ const draftForms = computed(() => {
     .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
 });
 
-const sentForms = computed(() => {
-  return forms.value
-    .filter(form => form.status === 'Sent' || form.status === 'Completed')
-    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
-});
-
 const getTeamName = (teamId?: string) => {
   if (!teamId) return 'No team';
   const team = teams.value.find(t => t._id === teamId);
