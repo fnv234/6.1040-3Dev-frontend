@@ -34,9 +34,27 @@ export function useToast() {
     }
   };
 
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    let color: Toast['color'] = 'blue';
+
+    if (type === 'success') {
+      color = 'green';
+    } else if (type === 'error') {
+      color = 'red';
+    } else {
+      color = 'blue';
+    }
+
+    add({
+      title: message,
+      color,
+    });
+  };
+
   return {
     toasts,
     add,
-    remove
+    remove,
+    showToast,
   };
 }

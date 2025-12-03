@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import type { FeedbackFormDraft, FeedbackQuestion } from '@/types';
+import type { FeedbackFormDraft } from '@/types';
 import { useAuthStore } from './auth';
 import { formTemplate as formTemplateAPI } from '@/api/client';
 

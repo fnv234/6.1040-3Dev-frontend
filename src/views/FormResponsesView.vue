@@ -111,7 +111,7 @@
                 class="question-response"
               >
                 <div class="question-prompt">
-                  <strong>Q{{ parseInt(questionIndex) + 1 }}:</strong> 
+                  <strong>Q{{ parseInt(String(questionIndex)) + 1 }}:</strong> 
                   {{ getQuestionPrompt(questionIndex) }}
                 </div>
                 <div class="response-text">
@@ -176,7 +176,7 @@ const sortBy = ref('date');
 const formQuestions = ref<any[]>([]);
 
 // Get forms from store
-const forms = computed(() => formsStore.forms);
+const forms = computed(() => formsStore.forms.value);
 const selectedForm = computed(() => 
   forms.value.find(f => f._id === selectedFormId.value)
 );
@@ -226,19 +226,9 @@ const loadForms = async () => {
   try {
     loading.value = true;
     error.value = '';
-    
-    // Forms should already be loaded in the store
-    if (!formsStore.loaded) {
-      // Wait for forms to load
-      await new Promise(resolve => {
-        const unwatch = formsStore.loaded ? resolve : () => {
-          if (formsStore.loaded) {
-            unwatch();
-            resolve(undefined);
-          }
-        };
-      });
-    }
+
+    // Forms are loaded reactively by the store; nothing else to do here for now.
+    // This function mainly controls the loading state and error handling.
 
   } catch (err: any) {
     error.value = err.message || 'Failed to load forms';

@@ -202,7 +202,7 @@ const validateForm = () => {
   });
 
   // Validate each question
-  questions.value.forEach((question, index) => {
+  questions.value.forEach((_, index) => {
     const response = responses[index];
     
     if (!response || response.trim() === '') {

@@ -224,7 +224,6 @@ import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { useAuthStore } from '@/store/auth';
-import { sendEmail } from '@/services/emailService';
 import { generateAccessCode, createAccessCodeEmailBody, createMailtoLink } from '@/utils/accessCode';
 import type { FeedbackFormDraft, TeamMember } from '@/types';
 

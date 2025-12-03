@@ -181,6 +181,7 @@ const editingTeam = ref<Team | null>(null);
 
 const formData = ref({
   name: '',
+  email: '',
   members: [] as string[],
   membersWithRoles: [] as Array<{memberId: string, role: string, email: string}>
 });
@@ -297,13 +298,14 @@ const importOrgChart = () => {
 const closeModal = () => {
   showCreateModal.value = false;
   editingTeam.value = null;
-  formData.value = { name: '', members: [], membersWithRoles: [] };
+  formData.value = { name: '', email: '', members: [], membersWithRoles: [] };
 };
 
 const editTeam = (team: Team) => {
   editingTeam.value = team;
   formData.value = {
     name: team.name,
+    email: (team as any).email || '',
     members: [...team.members],
     membersWithRoles: team.membersWithRoles ? [...team.membersWithRoles] : []
   };
