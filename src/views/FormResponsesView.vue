@@ -30,13 +30,21 @@
         >
           <option value="">Choose a form...</option>
           <option 
-            v-for="form in forms" 
+            v-for="form in formsWithResponses" 
             :key="form._id" 
             :value="form._id"
           >
             {{ form.name }}
           </option>
         </select>
+      </div>
+      
+      <div v-if="formsWithResponses.length === 0 && !loading" class="no-forms-with-responses">
+        <h3>No responses yet</h3>
+        <p class="text-secondary">No forms have received responses yet. Once team members submit feedback, those forms will appear here.</p>
+        <GradientButton @click="goToForms" style="margin-top: 1rem;">
+          View My Forms
+        </GradientButton>
       </div>
 
       <!-- Responses Display -->
@@ -163,6 +171,7 @@ const responses = ref<any[]>([]);
 const roleFilter = ref('');
 const sortBy = ref('date');
 const formQuestions = ref<any[]>([]);
+const formsResponseCounts = ref<Record<string, number>>({});
 
 // Get forms from store
 const forms = computed(() => formsStore.forms.value);
@@ -174,6 +183,14 @@ const selectedForm = computed(() =>
 const selectedTeam = computed(() => {
   if (!selectedForm.value?.teamId) return null;
   return teamsStore.teams.value.find(t => t._id === selectedForm.value?.teamId);
+});
+
+// Filter forms that have responses
+const formsWithResponses = computed(() => {
+  return forms.value.filter(form => {
+    const responseCount = formsResponseCounts.value[form._id || ''] || 0;
+    return responseCount > 0;
+  });
 });
 
 const uniqueRoles = computed(() => {
@@ -229,13 +246,32 @@ const loadForms = async () => {
     error.value = '';
 
     // Forms are loaded reactively by the store; nothing else to do here for now.
-    // This function mainly controls the loading state and error handling.
+    // Load response counts for all forms to determine which have responses
+    await loadFormResponseCounts();
 
   } catch (err: any) {
     error.value = err.message || 'Failed to load forms';
   } finally {
     loading.value = false;
   }
+};
+
+const loadFormResponseCounts = async () => {
+  const responseCounts: Record<string, number> = {};
+  
+  for (const form of forms.value) {
+    if (form._id) {
+      try {
+        const formResponses = await formsStore.getFormResponses(form._id);
+        responseCounts[form._id] = formResponses.length;
+      } catch (error) {
+        // If we can't load responses for a form, assume it has 0 responses
+        responseCounts[form._id] = 0;
+      }
+    }
+  }
+  
+  formsResponseCounts.value = responseCounts;
 };
 
 const onFormChange = async () => {
@@ -345,11 +381,31 @@ const goToForms = () => {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(126, 162, 170, 0.2);
 }
 
 .form-select option {
   background: #1f2937;
   color: white;
+}
+
+.no-forms-with-responses {
+  padding: 3rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.no-forms-with-responses h3 {
+  color: var(--title-primary);
+  margin-bottom: 1rem;
 }
 
 /* Summary */
@@ -495,6 +551,10 @@ const goToForms = () => {
 @media (max-width: 768px) {
   .responses-view {
     padding: 1rem;
+  }
+  
+  .form-select {
+    max-width: none;
   }
   
   .summary-stats {
