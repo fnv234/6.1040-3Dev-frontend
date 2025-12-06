@@ -1,0 +1,24 @@
+services:
+  # Static site service
+  - type: web
+    name: hr-feedback-admin
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: dist
+    routes:
+      # Handle client-side routing - redirect all non-file requests to index.html
+      - type: rewrite
+        source: /./*
+        destination: /index.html
+      # Handle nested routes
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # Optimize for Vue SPA
+    headers:
+      - path: /**
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /assets/**
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
