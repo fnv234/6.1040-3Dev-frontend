@@ -3,14 +3,13 @@ import type { Team, TeamMember } from '@/types';
 import { useAuthStore } from './auth';
 import { orgGraph } from '@/api/client';
 
+const teams = ref<Team[]>([]);
+const loading = ref(false);
+const loaded = ref(false);
+
 export function useTeamsStore() {
   const auth = useAuthStore();
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
-  
-  // Move state inside the function to create independent instances
-  const teams = ref<Team[]>([]);
-  const loading = ref(false);
-  const loaded = ref(false);
 
   // Load teams from backend when admin changes
   watch(currentAdminId, async (newAdminId: string | undefined) => {

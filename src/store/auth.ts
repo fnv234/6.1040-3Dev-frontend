@@ -5,9 +5,26 @@ import type { HRAdmin } from '@/types';
 const CURRENT_ADMIN_KEY = 'hrCurrentAdmin';
 const ADMIN_ID_KEY = 'hrAdminId';
 const ADMIN_EMAIL_KEY = 'hrAdminEmail';
+const SESSION_ID_KEY = 'hrSessionId';
+
+// Generate a unique session ID for this browser tab
+function getOrCreateSessionId(): string {
+  let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
+  if (!sessionId) {
+    sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+  }
+  return sessionId;
+}
+
+// Create session-specific storage keys
+function getSessionKey(baseKey: string): string {
+  const sessionId = getOrCreateSessionId();
+  return `${baseKey}_${sessionId}`;
+}
 
 function loadCurrentAdmin(): HRAdmin | null {
-  const raw = localStorage.getItem(CURRENT_ADMIN_KEY);
+  const raw = localStorage.getItem(getSessionKey(CURRENT_ADMIN_KEY));
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as HRAdmin;
@@ -26,21 +43,22 @@ function loadCurrentAdmin(): HRAdmin | null {
 }
 
 function saveCurrentAdmin(admin: HRAdmin) {
-  localStorage.setItem(CURRENT_ADMIN_KEY, JSON.stringify(admin));
-  localStorage.setItem(ADMIN_ID_KEY, admin._id);
-  localStorage.setItem(ADMIN_EMAIL_KEY, admin.email);
+  localStorage.setItem(getSessionKey(CURRENT_ADMIN_KEY), JSON.stringify(admin));
+  localStorage.setItem(getSessionKey(ADMIN_ID_KEY), admin._id);
+  localStorage.setItem(getSessionKey(ADMIN_EMAIL_KEY), admin.email);
 }
 
 function clearCurrentAdmin() {
-  localStorage.removeItem(CURRENT_ADMIN_KEY);
-  localStorage.removeItem(ADMIN_ID_KEY);
-  localStorage.removeItem(ADMIN_EMAIL_KEY);
+  localStorage.removeItem(getSessionKey(CURRENT_ADMIN_KEY));
+  localStorage.removeItem(getSessionKey(ADMIN_ID_KEY));
+  localStorage.removeItem(getSessionKey(ADMIN_EMAIL_KEY));
 }
 
 // Remove global currentAdmin ref - it will be created per store instance
 
+const currentAdmin = ref<HRAdmin | null>(loadCurrentAdmin());
+
 export function useAuthStore() {
-  const currentAdmin = ref<HRAdmin | null>(loadCurrentAdmin());
   const isAuthenticated = computed(() => !!currentAdmin.value);
 
   async function register(email: string, password: string): Promise<HRAdmin> {
