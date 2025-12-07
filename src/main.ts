@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import { useAuthStore } from './store/auth';
 import './style.css';
 
 // Note: @nuxt/ui is designed for Nuxt 3, not standalone Vue apps
@@ -18,5 +19,11 @@ import './style.css';
 const app = createApp(App);
 
 app.use(router);
+
+// Initialize auth store to ensure localStorage data is loaded
+// This ensures authentication state persists across page refreshes
+const authStore = useAuthStore();
+// Access currentAdmin to trigger the localStorage loading
+console.log('Auth initialized, current admin:', authStore.currentAdmin.value);
 
 app.mount('#app');

@@ -103,29 +103,37 @@ import { useFormsStore } from '@/store/forms';
 import Chart from 'chart.js/auto';
 
 const { teams } = useTeamsStore();
-const { forms } = useFormsStore();
+const formsStore = useFormsStore();
+const { forms } = formsStore;
 
 const loading = ref(true);
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
 
+// Store form response counts
+const formResponseCounts = ref<Record<string, number>>({});
+
 const teamStats = computed<TeamStatistics[]>(() => {
   return teams.value.map(team => {
-    // Calculate real statistics from forms
+    // Calculate real statistics from AccessCode form responses
     const teamForms = forms.value.filter(f => f.teamId === team._id);
-    const sentForms = teamForms.filter(f => f.status === 'Sent');
-    const completedForms = teamForms.filter(f => f.status === 'Completed');
     
-    const totalResponses = completedForms.length;
-    const responseRate = sentForms.length > 0 
-      ? Math.round((completedForms.length / sentForms.length) * 100)
+    // Count actual AccessCode responses for team forms
+    const totalResponses = teamForms.reduce((sum, form) => {
+      return sum + (formResponseCounts.value[form._id || ''] || 0);
+    }, 0);
+    
+    // Calculate response rate based on team size
+    const teamSize = team.members?.length || 0;
+    const responseRate = teamSize > 0 && teamForms.length > 0
+      ? Math.round((totalResponses / (teamForms.length * teamSize)) * 100)
       : 0;
 
     return {
       teamId: team._id,
       teamName: team.name,
       totalResponses,
-      responseRate,
+      responseRate: Math.min(100, responseRate), // Cap at 100%
       averageComfortLevel: totalResponses > 0 ? 4.2 : undefined, // Mock - integrate with real data
       sentimentSummary: totalResponses > 0 
         ? 'Team members report positive collaboration and clear communication. Areas for improvement include project planning and resource allocation.'
@@ -136,16 +144,26 @@ const teamStats = computed<TeamStatistics[]>(() => {
 
 const stats = computed(() => {
   const totalForms = forms.value.length;
-  const sentForms = forms.value.filter(f => f.status === 'Sent').length;
-  const completedForms = forms.value.filter(f => f.status === 'Completed').length;
-  const totalResponses = completedForms;
+  
+  // Count total actual AccessCode responses across all forms
+  const totalResponses = Object.values(formResponseCounts.value).reduce((sum, count) => sum + count, 0);
+  
+  // Calculate total expected responses (forms * team members)
+  const totalExpectedResponses = forms.value.reduce((sum, form) => {
+    const team = teams.value.find(t => t._id === form.teamId);
+    const teamSize = team?.members?.length || 0;
+    return sum + teamSize;
+  }, 0);
+  
   const activeTeams = teams.value.length;
-  const responseRate = sentForms > 0 ? Math.round((completedForms / sentForms) * 100) : 0;
+  const responseRate = totalExpectedResponses > 0 
+    ? Math.round((totalResponses / totalExpectedResponses) * 100) 
+    : 0;
 
   return {
     totalForms,
     totalResponses,
-    responseRate,
+    responseRate: Math.min(100, responseRate), // Cap at 100%
     activeTeams
   };
 });
@@ -198,13 +216,43 @@ const initChart = () => {
   });
 };
 
-onMounted(() => {
-  setTimeout(() => {
+const loadFormResponseCounts = async () => {
+  const counts: Record<string, number> = {};
+  
+  for (const form of forms.value) {
+    if (form._id) {
+      try {
+        const responses = await formsStore.getFormResponses(form._id);
+        counts[form._id] = responses.length;
+      } catch (error) {
+        // If we can't load responses for a form, assume it has 0 responses
+        counts[form._id] = 0;
+      }
+    }
+  }
+  
+  formResponseCounts.value = counts;
+};
+
+onMounted(async () => {
+  try {
+    // Wait for forms to be loaded (watch in store loads them automatically)
+    let attempts = 0;
+    while (!formsStore.loaded.value && attempts < 20) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    // Now load response counts
+    await loadFormResponseCounts();
+  } catch (error) {
+    console.error('Error loading dashboard data:', error);
+  } finally {
     loading.value = false;
     nextTick(() => {
       initChart();
     });
-  }, 300);
+  }
 });
 
 const regenerateSummary = async (teamId: string) => {

@@ -50,7 +50,17 @@
       <!-- Responses Display -->
       <div v-if="selectedFormId && responses.length > 0" class="responses-section">
         <div class="responses-summary">
-          <h2>{{ selectedForm?.name }} - Responses</h2>
+          <div class="summary-header">
+            <h2>{{ selectedForm?.name }} - Responses</h2>
+            <GradientButton 
+              @click="generateReport" 
+              :disabled="generatingReport || responses.length < 3"
+              class="btn-generate-report"
+            >
+              <span v-if="generatingReport">Generating Report...</span>
+              <span v-else>📊 {{ synthesizedReport ? 'Regenerate' : 'Generate' }} Synthesis Report</span>
+            </GradientButton>
+          </div>
           <div class="summary-stats">
             <div class="stat">
               <span class="stat-value">{{ responses.length }}</span>
@@ -63,6 +73,86 @@
             <div class="stat">
               <span class="stat-value">{{ completionRate }}%</span>
               <span class="stat-label">Completion Rate</span>
+            </div>
+          </div>
+          <p v-if="responses.length < 3" class="warning-text">
+            ⚠️ At least 3 responses required to generate a synthesis report
+          </p>
+        </div>
+
+        <!-- Generated Report Display -->
+        <div v-if="synthesizedReport" class="synthesized-report-section">
+          <div class="report-header">
+            <h3>📄 Synthesized Report</h3>
+            <div class="report-actions">
+              <button @click="toggleReportMinimize" class="btn-minimize-report">
+                {{ reportMinimized ? '▼ Expand' : '▲ Minimize' }}
+              </button>
+              <button @click="closeSynthesizedReport" class="btn-close-report">
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          
+          <div v-show="!reportMinimized" class="report-content">
+            <div class="report-meta">
+              <span class="report-date">Generated: {{ formatDate(synthesizedReport.createdAt) }}</span>
+            </div>
+
+            <div v-if="synthesizedReport.keyThemes && synthesizedReport.keyThemes.length > 0" class="report-themes">
+              <h4>Key Themes</h4>
+              <div class="themes-list">
+                <span v-for="theme in synthesizedReport.keyThemes" :key="theme" class="theme-tag">
+                  {{ theme }}
+                </span>
+              </div>
+            </div>
+
+            <div class="report-summary">
+              <h4>Summary</h4>
+              <div class="summary-text">
+                {{ synthesizedReport.textSummary }}
+              </div>
+            </div>
+
+            <div v-if="synthesizedReport.keyQuotes && synthesizedReport.keyQuotes.length > 0" class="report-quotes">
+              <h4>Key Quotes</h4>
+              <ul class="quotes-list">
+                <li v-for="(quote, index) in synthesizedReport.keyQuotes" :key="index" class="quote-item">
+                  "{{ quote }}"
+                </li>
+              </ul>
+            </div>
+
+            <div v-if="synthesizedReport.metrics" class="report-metrics">
+              <h4>Metrics</h4>
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <span class="metric-label">Total Responses:</span>
+                  <span class="metric-value">{{ synthesizedReport.metrics.totalResponses }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Unique Respondents:</span>
+                  <span class="metric-value">{{ synthesizedReport.metrics.uniqueRespondents }}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Questions Answered:</span>
+                  <span class="metric-value">{{ synthesizedReport.metrics.questionsAnswered }}</span>
+                </div>
+                <div v-if="synthesizedReport.metrics.averageResponseLength" class="metric-item">
+                  <span class="metric-label">Avg Response Length:</span>
+                  <span class="metric-value">{{ Math.round(synthesizedReport.metrics.averageResponseLength) }} chars</span>
+                </div>
+              </div>
+              <div v-if="synthesizedReport.metrics.roleDistribution" class="role-distribution">
+                <h5>Response Distribution by Role</h5>
+                <div class="role-dist-grid">
+                  <div v-for="(count, role) in synthesizedReport.metrics.roleDistribution" :key="role" class="role-dist-item">
+                    <span class="role-name">{{ role }}:</span>
+                    <span class="role-count">{{ count }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -152,7 +242,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
@@ -172,6 +262,9 @@ const roleFilter = ref('');
 const sortBy = ref('date');
 const formQuestions = ref<any[]>([]);
 const formsResponseCounts = ref<Record<string, number>>({});
+const generatingReport = ref(false);
+const synthesizedReport = ref<any | null>(null);
+const reportMinimized = ref(false);
 
 // Get forms from store
 const forms = computed(() => formsStore.forms.value);
@@ -274,16 +367,6 @@ const loadFormResponseCounts = async () => {
   formsResponseCounts.value = responseCounts;
 };
 
-const onFormChange = async () => {
-  if (!selectedFormId.value) {
-    responses.value = [];
-    formQuestions.value = [];
-    return;
-  }
-
-  await loadResponses();
-};
-
 const loadResponses = async () => {
   if (!selectedFormId.value) return;
 
@@ -326,6 +409,125 @@ const formatDate = (dateString: string): string => {
 
 const goToForms = () => {
   router.push('/my-forms');
+};
+
+const generateReport = async () => {
+  if (!selectedFormId.value || responses.value.length < 3) {
+    showToast('At least 3 responses required to generate a report', 'error');
+    return;
+  }
+
+  try {
+    generatingReport.value = true;
+    error.value = '';
+
+    // Get current admin ID from forms store
+    const { currentAdminId } = useFormsStore();
+    if (!currentAdminId.value) {
+      throw new Error('No current admin');
+    }
+
+    // Call the sync-based API that handles everything
+    const response = await fetch('/api/ReportSynthesis/generateFormTemplateReport', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        formTemplateId: selectedFormId.value,
+        createdBy: currentAdminId.value,
+        anonymityFlag: true,
+        kThreshold: 3,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate report');
+    }
+
+    // The sync returns the completed report via the respond action
+    const responseData = await response.json();
+    console.log('Full backend response:', responseData); // Debug log
+    const { report } = responseData;
+    console.log('Generated report:', report); // Debug log
+    if (!report) {
+      throw new Error('No report data received from backend');
+    }
+    synthesizedReport.value = report;
+    // Reset minimized state when regenerating so the report stays visible
+    reportMinimized.value = false;
+    console.log('Report set in ref:', synthesizedReport.value); // Debug log
+    showToast('Synthesis report generated successfully!', 'success');
+
+  } catch (err: any) {
+    console.error('Error generating report:', err);
+    error.value = err.message || 'Failed to generate report';
+    showToast(error.value, 'error');
+  } finally {
+    generatingReport.value = false;
+  }
+};
+
+const closeSynthesizedReport = () => {
+  synthesizedReport.value = null;
+  reportMinimized.value = false;
+};
+
+const toggleReportMinimize = () => {
+  reportMinimized.value = !reportMinimized.value;
+};
+
+// Watch for changes to synthesizedReport to debug disappearing issue
+watch(synthesizedReport, (newValue, oldValue) => {
+  console.log('synthesizedReport changed:', { 
+    newValue: !!newValue, 
+    oldValue: !!oldValue,
+    newValueData: newValue,
+    reportMinimized: reportMinimized.value 
+  });
+}, { deep: true });
+
+const onFormChange = async () => {
+  if (!selectedFormId.value) {
+    responses.value = [];
+    formQuestions.value = [];
+    synthesizedReport.value = null;
+    reportMinimized.value = false;
+    return;
+  }
+
+  await loadResponses();
+  // Try to load existing report for this form
+  await loadExistingReport();
+  // Reset minimized state when loading a new form
+  reportMinimized.value = false;
+};
+
+const loadExistingReport = async () => {
+  if (!selectedFormId.value) return;
+
+  try {
+    const response = await fetch('/api/ReportSynthesis/getReportByFormTemplate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        formTemplate: selectedFormId.value,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.report) {
+        synthesizedReport.value = data.report;
+      }
+    }
+  } catch (err) {
+    // No existing report, which is fine
+    console.log('No existing report found');
+  }
 };
 </script>
 
@@ -416,9 +618,32 @@ const goToForms = () => {
   border-radius: 8px;
 }
 
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .responses-summary h2 {
   color: var(--title-primary);
-  margin-bottom: 1rem;
+  margin: 0;
+}
+
+.btn-generate-report {
+  white-space: nowrap;
+}
+
+.warning-text {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid #ffc107;
+  border-radius: 4px;
+  color: #ffc107;
+  font-size: 0.875rem;
 }
 
 .summary-stats {
@@ -533,6 +758,228 @@ const goToForms = () => {
   color: white;
   line-height: 1.5;
   padding: 0.5rem 0;
+}
+
+/* Synthesized Report Section */
+.synthesized-report-section {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(126, 162, 170, 0.1), rgba(66, 122, 161, 0.1));
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.report-header h3 {
+  color: var(--title-primary);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-minimize-report {
+  padding: 0.5rem 1rem;
+  background: rgba(108, 222, 247, 0.1);
+  border: 1px solid rgba(108, 222, 247, 0.3);
+  border-radius: 6px;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-minimize-report:hover {
+  background: rgba(108, 222, 247, 0.2);
+  border-color: var(--primary);
+}
+
+.btn-close-report {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-close-report:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.report-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.report-meta {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.report-themes {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.report-themes h4 {
+  color: var(--title-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.themes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.theme-tag {
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.report-summary {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.report-summary h4 {
+  color: var(--title-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.summary-text {
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.report-quotes {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.report-quotes h4 {
+  color: var(--title-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.quotes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quote-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--primary);
+  border-radius: 4px;
+  color: var(--text);
+  font-style: italic;
+}
+
+.report-metrics {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.report-metrics h4 {
+  color: var(--title-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.role-distribution {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.role-distribution h5 {
+  color: var(--title-primary);
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+}
+
+.role-dist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.role-dist-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.role-name {
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.role-count {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* Empty States */

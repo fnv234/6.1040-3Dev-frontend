@@ -73,10 +73,27 @@ const router = createRouter({
 
 // Simple auth guard (expand with real token validation)
 router.beforeEach((to, _from, next) => {
-  const isAuthenticated = localStorage.getItem('hrCurrentAdmin');
+  // Check if user is authenticated by verifying localStorage data exists and is valid
+  const adminData = localStorage.getItem('hrCurrentAdmin');
+  let isAuthenticated = false;
+  
+  if (adminData) {
+    try {
+      const parsed = JSON.parse(adminData);
+      isAuthenticated = parsed && parsed._id && parsed.email;
+    } catch {
+      // Invalid data in localStorage, clear it
+      localStorage.removeItem('hrCurrentAdmin');
+      localStorage.removeItem('hrAdminId');
+      localStorage.removeItem('hrAdminEmail');
+    }
+  }
   
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
+  } else if (to.path === '/login' && isAuthenticated) {
+    // If already authenticated and trying to access login, redirect to dashboard
+    next('/dashboard');
   } else {
     next();
   }

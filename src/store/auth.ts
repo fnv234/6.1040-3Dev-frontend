@@ -10,8 +10,17 @@ function loadCurrentAdmin(): HRAdmin | null {
   const raw = localStorage.getItem(CURRENT_ADMIN_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as HRAdmin;
-  } catch {
+    const parsed = JSON.parse(raw) as HRAdmin;
+    // Validate that the parsed data has required fields
+    if (parsed && parsed._id && parsed.email) {
+      return parsed;
+    }
+    // Invalid data, clear localStorage
+    clearCurrentAdmin();
+    return null;
+  } catch (error) {
+    // Invalid JSON, clear localStorage
+    clearCurrentAdmin();
     return null;
   }
 }

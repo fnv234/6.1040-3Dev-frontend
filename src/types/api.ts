@@ -421,6 +421,74 @@ export interface GetReportsByTargetRequest {
   target: string;
 }
 
+// AccessCode
+
+export interface AccessCodeInfo {
+  _id: string;
+  accessCode: string;
+  formId: string;
+  teamId: string;
+  memberId: string;
+  memberEmail: string;
+  memberRole?: string;
+  createdBy: string;
+  createdDate: string;
+  used: boolean;
+  usedDate?: string;
+}
+
+export interface CreateAccessCodeRequest {
+  accessCode: string;
+  formId: string;
+  teamId: string;
+  memberId: string;
+  memberEmail: string;
+  memberRole?: string;
+  createdBy: string;
+}
+
+export interface CreateAccessCodeResponse {
+  accessCodeId: string;
+}
+
+export interface GetAccessCodeInfoRequest {
+  accessCode: string;
+}
+
+export interface GetAccessCodeInfoResponse {
+  accessCodeInfo: AccessCodeInfo;
+}
+
+export interface SubmitFormResponseRequest {
+  accessCode: string;
+  responses: Record<number, string>;
+}
+
+export interface SubmitFormResponseResponse {
+  responseId: string;
+}
+
+export interface GetFormResponsesRequest {
+  formId: string;
+  createdBy: string;
+}
+
+export interface FormResponse {
+  _id: string;
+  accessCode: string;
+  formId: string;
+  teamId: string;
+  memberId: string;
+  memberEmail: string;
+  memberRole?: string;
+  responses: Record<number, string>;
+  submittedDate: string;
+}
+
+export interface GetFormResponsesResponse {
+  responses: FormResponse[];
+}
+
 export interface ApiError {
   error: string;
 }

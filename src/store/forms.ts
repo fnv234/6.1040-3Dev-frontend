@@ -178,7 +178,7 @@ export const useFormsStore = () => {
   // API functions for form responses and access codes
   const getFormByAccessCode = async (accessCode: string) => {
     try {
-      const response = await fetch(`https://six-1040-3dev-backend.onrender.com/api/AccessCode/getAccessCodeInfo`, {
+      const response = await fetch(`/api/AccessCode/getAccessCodeInfo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export const useFormsStore = () => {
       const { accessCodeInfo } = await response.json();
       
       // Get the form template
-      const formResponse = await fetch(`https://six-1040-3dev-backend.onrender.com/api/FormTemplate/getTemplate`, {
+      const formResponse = await fetch(`/api/FormTemplate/getTemplate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -248,7 +248,7 @@ export const useFormsStore = () => {
     try {
       console.log('Submitting form response:', { accessCode, responses });
       
-      const response = await fetch(`https://six-1040-3dev-backend.onrender.com/api/AccessCode/submitFormResponse`, {
+      const response = await fetch(`/api/AccessCode/submitFormResponse`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -285,7 +285,7 @@ export const useFormsStore = () => {
     }
 
     try {
-      const response = await fetch(`https://six-1040-3dev-backend.onrender.com/api/AccessCode/getFormResponses`, {
+      const response = await fetch(`/api/AccessCode/getFormResponses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,31 +297,34 @@ export const useFormsStore = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get form responses');
+        // Return empty array for forms without responses instead of throwing
+        // This is normal when a form hasn't been sent yet or has no access codes
+        return [];
       }
 
       const { responses } = await response.json();
       return responses;
     } catch (error) {
-      console.error('Error getting form responses:', error);
-      throw error;
+      // Silently return empty array - errors are expected for forms without responses
+      return [];
     }
   };
 
-  return {
-    forms,
-    loading,
-    loaded,
-    saveForm,
-    deleteForm,
-    getFormById,
-    sendForm,
-    getAccessCode,
-    setAccessCode,
-    loadAccessCodesFromStorage,
-    getFormByAccessCode,
-    getQuestionsForRole,
-    submitFormResponse,
-    getFormResponses,
-  };
+return {
+  forms,
+  loading,
+  loaded,
+  currentAdminId,
+  saveForm,
+  deleteForm,
+  getFormById,
+  sendForm,
+  getAccessCode,
+  setAccessCode,
+  loadAccessCodesFromStorage,
+  getFormByAccessCode,
+  getQuestionsForRole,
+  submitFormResponse,
+  getFormResponses,
+};
 };
