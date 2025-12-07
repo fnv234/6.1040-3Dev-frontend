@@ -168,7 +168,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import type { FeedbackFormDraft, FeedbackQuestion } from '@/types';
+import type { FormTemplate, FeedbackQuestion } from '@/types';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import GradientButton from '@/components/ui/GradientButton.vue';
@@ -305,7 +305,7 @@ const saveFormDraft = () => {
   // Get current HR admin ID
   const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
 
-  const feedbackFormDraft: FeedbackFormDraft = {
+  const formTemplate: FormTemplate = {
     name: form.name,
     creator: creatorId,
     teamId: form.teamId,
@@ -314,7 +314,7 @@ const saveFormDraft = () => {
     questions: processedQuestions
   };
 
-  formsStore.saveForm(feedbackFormDraft);
+  formsStore.saveForm(formTemplate);
   alert('Form saved successfully!');
   router.push('/forms');
 };
@@ -345,7 +345,7 @@ const saveAndSendForm = async () => {
   // Get current HR admin ID
   const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
 
-  const feedbackFormDraft: FeedbackFormDraft = {
+  const formTemplate: FormTemplate = {
     name: form.name,
     creator: creatorId,
     teamId: form.teamId,
@@ -355,13 +355,13 @@ const saveAndSendForm = async () => {
   };
 
   // Save form and mark as sent
-  formsStore.saveForm(feedbackFormDraft);
+  formsStore.saveForm(formTemplate);
   
   // In production: 
-  // 1. Create individual FeedbackForm documents for each reviewer-target pair in the team
-  // 2. Send emails to reviewers with form links
+  // 1. Generate access codes for team members
+  // 2. Send emails to team members with form links and access codes
   
-  console.log('Saving and sending form:', feedbackFormDraft);
+  console.log('Saving and sending form:', formTemplate);
   
   const teamName = availableTeams.value.find(t => t._id === form.teamId)?.name;
   alert(`Form created and sent to ${teamName}!`);

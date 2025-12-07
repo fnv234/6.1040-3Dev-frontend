@@ -111,10 +111,9 @@
               <span>Preview Mode - This is how your form will appear to reviewers</span>
             </div>
             
-            <FeedbackForm 
-              :questions="previewingForm.questions"
-              :show-submit-button="false"
-            />
+            <div class="preview-form-container">
+              <AccessCodeFormView :preview-mode="true" :preview-data="previewingForm" />
+            </div>
           </div>
         </div>
       </div>
@@ -124,13 +123,13 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import FeedbackForm from '@/components/feedback/FeedbackForm.vue';
+import AccessCodeFormView from '@/views/AccessCodeFormView.vue';
 import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { useAuthStore } from '@/store/auth';
 import { generateAccessCode, createAccessCodeEmailBody, createMailtoLink } from '@/utils/accessCode';
-import type { FeedbackFormDraft, TeamMember } from '@/types';
+import type { FormTemplate, TeamMember } from '@/types';
 
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
@@ -146,7 +145,7 @@ onMounted(() => {
 });
 
 const sending = ref(false);
-const previewingForm = ref<FeedbackFormDraft | null>(null);
+const previewingForm = ref<FormTemplate | null>(null);
 const activeTab = ref<'drafts' | 'sent'>('drafts');
 
 const draftForms = computed(() => {
@@ -179,7 +178,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const previewFormTemplate = (form: FeedbackFormDraft) => {
+const previewFormTemplate = (form: FormTemplate) => {
   previewingForm.value = form;
 };
 
@@ -193,7 +192,7 @@ const deleteForm = (formId: string) => {
   }
 };
 
-const sendEmailToMember = async (form: FeedbackFormDraft, member: TeamMember) => {
+const sendEmailToMember = async (form: FormTemplate, member: TeamMember) => {
   if (!form._id || !form.teamId) {
     alert('Cannot send email: Form ID or team not found');
     return;
@@ -743,6 +742,13 @@ const sendEmailToMember = async (form: FeedbackFormDraft, member: TeamMember) =>
 .btn-secondary:hover {
   background: var(--border);
   transform: translateY(-2px);
+}
+
+.preview-form-container {
+  background: rgba(3, 33, 140, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 400px;
 }
 
 /* Modal transition */

@@ -1,9 +1,9 @@
 import { ref, computed, watch } from 'vue';
-import type { FeedbackFormDraft } from '@/types';
+import type { FormTemplate } from '@/types';
 import { useAuthStore } from './auth';
 import { formTemplate as formTemplateAPI } from '@/api/client';
 
-const forms = ref<FeedbackFormDraft[]>([]);
+const forms = ref<FormTemplate[]>([]);
 const loading = ref(false);
 const loaded = ref(false);
 
@@ -30,7 +30,7 @@ export const useFormsStore = () => {
 
     const raw = localStorage.getItem(storageKey.value);
     try {
-      forms.value = raw ? (JSON.parse(raw) as FeedbackFormDraft[]) : [];
+      forms.value = raw ? (JSON.parse(raw) as FormTemplate[]) : [];
       loaded.value = true;
     } catch {
       forms.value = [];
@@ -88,7 +88,7 @@ export const useFormsStore = () => {
     { deep: true },
   );
 
-  const saveForm = async (form: FeedbackFormDraft) => {
+  const saveForm = async (form: FormTemplate) => {
     if (!currentAdminId.value) {
       throw new Error('Cannot save form: no current admin');
     }
@@ -130,7 +130,7 @@ export const useFormsStore = () => {
     forms.value = forms.value.filter((f) => f._id !== formId);
   };
 
-  const getFormById = (formId: string): FeedbackFormDraft | undefined => {
+  const getFormById = (formId: string): FormTemplate | undefined => {
     return forms.value.find((f) => f._id === formId);
   };
 

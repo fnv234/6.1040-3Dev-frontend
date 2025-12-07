@@ -4,7 +4,12 @@
       <div v-for="(question, index) in questions" :key="index" class="question-block">
         <div class="question-header">
           <span class="question-number">{{ index + 1 }}</span>
-          <h3 class="question-prompt">{{ question.prompt }}</h3>
+          <div class="question-content">
+            <h3 class="question-prompt">{{ question.prompt }}</h3>
+            <span v-if="question.targetRoles && question.targetRoles.length > 0" class="role-indicator">
+              ({{ question.targetRoles.join(', ') }} only)
+            </span>
+          </div>
           <span v-if="question.required" class="required-badge">*</span>
         </div>
 
@@ -22,46 +27,42 @@
         <!-- Scale (1-5) -->
         <div v-else-if="question.type === 'Scale'" class="answer-section scale-section">
           <div class="scale-container">
-            <div class="scale-labels">
-              <span class="scale-label">{{ question.min || 1 }}</span>
-              <span class="scale-label">{{ question.max || 5 }}</span>
+            <div class="scale-options">
+              <label v-for="n in (question.max || 5)" :key="n" class="scale-option">
+                <input
+                  type="radio"
+                  :name="`question-${index}`"
+                  :value="n.toString()"
+                  v-model="formState[`question-${index}`]"
+                  :required="question.required"
+                  class="scale-radio"
+                />
+                <span class="scale-label">{{ n }}</span>
+              </label>
             </div>
-            <input
-              type="range"
-              v-model.number="formState[`question-${index}`]"
-              :min="question.min || 1"
-              :max="question.max || 5"
-              :step="question.step || 1"
-              class="scale-slider"
-              :required="question.required"
-            />
-            <div class="scale-value">
-              <span class="current-value">{{ formState[`question-${index}`] || question.min || 1 }}</span>
+            <div class="scale-text-labels">
+              <span class="scale-text-label">{{ question.minLabel || 'Strongly Disagree' }}</span>
+              <span class="scale-text-label">{{ question.maxLabel || 'Strongly Agree' }}</span>
             </div>
           </div>
         </div>
 
         <!-- Multiple Choice -->
         <div v-else-if="question.type === 'Multiple Choice'" class="answer-section">
-          <div class="options-grid">
-            <label
+          <select
+            v-model="formState[`question-${index}`]"
+            :required="question.required"
+            class="form-select"
+          >
+            <option value="">Select an option</option>
+            <option
               v-for="(option, optIdx) in question.options"
               :key="optIdx"
-              class="option-card"
-              :class="{ 'selected': formState[`question-${index}`] === option }"
+              :value="option"
             >
-              <input
-                type="radio"
-                :name="`question-${index}`"
-                :value="option"
-                v-model="formState[`question-${index}`]"
-                :required="question.required"
-                class="option-radio"
-              />
-              <span class="option-text">{{ option }}</span>
-              <span class="check-icon">✓</span>
-            </label>
-          </div>
+              {{ option }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -92,6 +93,9 @@ const props = defineProps({
       max?: number;
       step?: number;
       placeholder?: string;
+      targetRoles?: string[];
+      minLabel?: string;
+      maxLabel?: string;
     }>,
     required: true
   },
@@ -141,9 +145,9 @@ async function handleSubmit() {
 
 <style scoped>
 .feedback-form-wrapper {
-  background: var(--bg);
+  background: rgba(3, 33, 140, 0.66);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 .feedback-form {
@@ -153,15 +157,15 @@ async function handleSubmit() {
 }
 
 .question-block {
-  background: white;
-  border: 2px solid var(--border);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
   padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: border-color 0.3s ease;
 }
 
 .question-block:hover {
-  border-color: var(--primary);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .question-header {
@@ -169,6 +173,25 @@ async function handleSubmit() {
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.25rem;
+}
+
+.question-content {
+  flex: 1;
+}
+
+.question-prompt {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--title-primary);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.role-indicator {
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-style: italic;
+  margin-left: 0.5rem;
 }
 
 .question-number {
@@ -185,19 +208,9 @@ async function handleSubmit() {
   flex-shrink: 0;
 }
 
-.question-prompt {
-  flex: 1;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--title-primary);
-  margin: 0;
-  line-height: 1.5;
-}
-
 .required-badge {
-  color: var(--error);
-  font-size: 1.25rem;
-  font-weight: 700;
+  color: #ef4444;
+  margin-left: 0.25rem;
 }
 
 .answer-section {
@@ -207,9 +220,11 @@ async function handleSubmit() {
 /* Free Response */
 .textarea-input {
   width: 100%;
-  padding: 0.875rem;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -220,178 +235,99 @@ async function handleSubmit() {
 .textarea-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(126, 162, 170, 0.1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.textarea-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Scale */
 .scale-section {
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  text-align: center;
 }
 
 .scale-container {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 0.5rem;
 }
 
-.scale-labels {
+.scale-options {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.scale-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+
+.scale-radio {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.scale-label {
+  color: var(--title-primary);
+  font-weight: 500;
+}
+
+.scale-text-labels {
   display: flex;
   justify-content: space-between;
   font-size: 0.875rem;
-  font-weight: 600;
   color: var(--text-secondary);
+  margin-top: 0.5rem;
 }
 
-.scale-slider {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(to right, #7EA2AA, #427AA1);
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-}
-
-.scale-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--primary);
-  cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.scale-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.scale-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--primary);
-  cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.scale-slider::-moz-range-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.scale-value {
+.scale-text-label {
   text-align: center;
 }
 
-.current-value {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  background: var(--primary);
-  color: white;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 /* Multiple Choice */
-.options-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.option-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  background: white;
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.3s ease;
-  user-select: none;
 }
 
-.option-card:hover {
+.form-select:focus {
+  outline: none;
   border-color: var(--primary);
-  background: var(--bg-secondary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-.option-card.selected {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(126, 162, 170, 0.15), rgba(66, 122, 161, 0.15));
-  box-shadow: 0 4px 12px rgba(66, 122, 161, 0.2);
+.form-select option {
+  background: #1f2937;
+  color: white;
 }
 
-.option-radio {
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.option-card:hover .option-radio {
-  border-color: var(--primary);
-}
-
-.option-card.selected .option-radio {
-  border-color: var(--primary);
-  background: var(--primary);
-  box-shadow: 0 0 0 3px rgba(126, 162, 170, 0.3);
-}
-
-.option-text {
-  flex: 1;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.option-card.selected .option-text {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.check-icon {
-  display: none;
-  color: var(--primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.option-card.selected .check-icon {
-  display: block;
+.form-select:invalid {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Form Actions */
 .form-actions {
   display: flex;
+  justify-content: center;
   gap: 1rem;
-  justify-content: flex-end;
+  margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 2px solid var(--border);
-  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-cancel,
@@ -407,21 +343,30 @@ async function handleSubmit() {
 }
 
 .btn-cancel {
-  background: var(--bg-secondary);
-  color: var(--text);
-  border: 2px solid var(--border);
+  padding: 0.75rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .btn-cancel:hover {
-  background: var(--border);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-submit {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   box-shadow: 0 4px 12px rgba(66, 122, 161, 0.3);
+  min-width: 200px;
 }
 
 .btn-submit:hover:not(:disabled) {

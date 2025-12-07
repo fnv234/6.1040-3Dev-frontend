@@ -44,7 +44,7 @@
             </div>
           </div>
 
-          <form @submit.prevent="submitForm" class="feedback-form">
+          <form @submit.prevent="submitForm" class="feedback-form" v-if="!props.previewMode">
             <div v-for="(question, index) in questions" :key="index" class="question-block">
               <label class="question-label">
                 {{ index + 1 }}. {{ question.prompt }}
@@ -118,6 +118,60 @@
               </button>
             </div>
           </form>
+          
+          <!-- Preview Mode Form -->
+          <div v-else class="feedback-form">
+            <div v-for="(question, index) in questions" :key="index" class="question-block">
+              <label class="question-label">
+                {{ index + 1 }}. {{ question.prompt }}
+                <span class="required-indicator">*</span>
+                <span v-if="question.targetRoles && question.targetRoles.length > 0" class="role-indicator">
+                  ({{ question.targetRoles.join(', ') }} only)
+                </span>
+              </label>
+
+              <!-- Multiple Choice -->
+              <div v-if="question.type === 'Multiple Choice'" class="question-input">
+                <select class="form-select">
+                  <option value="">Select an option</option>
+                  <option
+                    v-for="(option, optIdx) in question.options"
+                    :key="optIdx"
+                    :value="option"
+                  >
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Scale -->
+              <div v-else-if="question.type === 'Scale'" class="question-input scale-input">
+                <div class="scale-container">
+                  <label v-for="n in (question.max || 5)" :key="n" class="scale-option">
+                    <input 
+                      type="radio" 
+                      :name="`preview-question-${index}`"
+                      :value="n.toString()"
+                    />
+                    <span class="scale-label">{{ n }}</span>
+                  </label>
+                </div>
+                <div class="scale-labels">
+                  <span>{{ question.minLabel || 'Strongly Disagree' }}</span>
+                  <span>{{ question.maxLabel || 'Strongly Agree' }}</span>
+                </div>
+              </div>
+
+              <!-- Free Text -->
+              <div v-else class="question-input">
+                <textarea 
+                  :placeholder="question.placeholder || 'Enter your response...'"
+                  class="form-textarea"
+                  rows="4"
+                ></textarea>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -140,6 +194,16 @@ const { showToast } = useToast();
 const accessCode = ref('');
 const loading = ref(true);
 const error = ref('');
+const props = defineProps({
+  previewMode: {
+    type: Boolean,
+    default: false
+  },
+  previewData: {
+    type: Object,
+    default: null
+  }
+});
 const submitting = ref(false);
 const submitted = ref(false);
 
@@ -150,16 +214,28 @@ const responses = reactive<Record<number, string>>({});
 const validationErrors = reactive<Record<number, string>>({});
 
 onMounted(async () => {
-  // Get the access code from route params
-  accessCode.value = route.params.code as string;
-  
-  // If no access code is provided, redirect to login
-  if (!accessCode.value) {
-    router.push('/login');
-    return;
-  }
+  if (props.previewMode && props.previewData) {
+    // Use preview data instead of loading from API
+    loading.value = false;
+    formData.value = props.previewData;
+    questions.value = props.previewData.questions || [];
+    
+    // Initialize responses
+    for (let i = 0; i < questions.value.length; i++) {
+      responses[i] = '';
+    }
+  } else {
+    // Get the access code from route params
+    accessCode.value = route.params.code as string;
+    
+    // If no access code is provided, redirect to login
+    if (!accessCode.value) {
+      router.push('/login');
+      return;
+    }
 
-  await loadForm();
+    await loadForm();
+  }
 });
 
 const loadForm = async () => {

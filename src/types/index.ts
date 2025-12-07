@@ -38,12 +38,12 @@ export interface FeedbackForm {
   questions: FeedbackQuestion[];
 }
 
-// Frontend-only extended types for team-based form creation
-export interface FeedbackFormDraft {
+// FormTemplate type matching the backend FormTemplate concept
+export interface FormTemplate {
   _id?: string;
   name: string;
   creator: string; // User/HR Admin ID
-  teamId?: string; // Frontend only: for bulk form creation
+  teamId?: string; // Optional team association
   status: 'Created' | 'Sent' | 'Completed';
   createdDate: string;
   completedDate?: string;
