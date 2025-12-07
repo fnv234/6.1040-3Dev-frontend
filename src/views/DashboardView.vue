@@ -65,7 +65,9 @@
             <div v-if="team.sentimentSummary" class="sentiment-summary">
               <h4>AI Summary</h4>
               <p class="text-secondary">{{ team.sentimentSummary }}</p>
-              
+              <GradientButton @click="regenerateSummary(team.teamId)" size="small" class="mt-2">
+                Regenerate Summary
+              </GradientButton>
             </div>
           </div>
         </div>
@@ -87,6 +89,7 @@ import { computed, ref, onMounted, nextTick } from 'vue';
 import type { TeamStatistics } from '@/types';
 import { useTeamsStore } from '@/store/teams';
 import { useFormsStore } from '@/store/forms';
+import { reportSynthesis } from '@/api/client';
 import Chart from 'chart.js/auto';
 
 const { teams } = useTeamsStore();
@@ -278,8 +281,39 @@ onMounted(async () => {
 
 const regenerateSummary = async (teamId: string) => {
   console.log('Regenerating LLM summary for team:', teamId);
-  // TODO: Implement actual LLM call
-  alert('LLM summary regeneration would happen here');
+  
+  try {
+    // Find the team data
+    const team = teams.value.find(t => t._id === teamId);
+    if (!team) {
+      alert('Team not found');
+      return;
+    }
+
+    // Prepare members data - use membersWithRoles if available, otherwise fallback
+    const members = (team.membersWithRoles || []).map(member => ({
+      name: member.email.split('@')[0], // Extract name from email
+      role: member.role || 'Team Member'
+    }));
+
+    // Call the new backend endpoint
+    const response = await reportSynthesis.generateTeamSummary({
+      teamId,
+      teamName: team.name,
+      members
+    });
+
+    if (response.data.success) {
+      // For now, just show the summary in an alert
+      // In a real implementation, you might want to store this somewhere
+      alert(`Team Summary: ${response.data.summary}`);
+    } else {
+      alert('Failed to generate team summary');
+    }
+  } catch (error) {
+    console.error('Error regenerating team summary:', error);
+    alert('Error generating team summary');
+  }
 };
 </script>
 

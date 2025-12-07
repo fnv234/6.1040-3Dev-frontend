@@ -244,6 +244,10 @@ export const reportSynthesis = {
 
   getReportsByTarget(data: API.GetReportsByTargetRequest) {
     return http.post<void>('/ReportSynthesis/getReportsByTarget', data);
+  },
+
+  generateTeamSummary(data: { teamId: string; teamName: string; members: Array<{name: string; role: string}> }) {
+    return http.post<{ success: boolean; summary: string; teamId: string; teamName: string }>('/ReportSynthesis/generateTeamSummary', data);
   }
 };
 
