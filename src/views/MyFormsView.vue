@@ -130,6 +130,7 @@ import { useTeamsStore } from '@/store/teams';
 import { useAuthStore } from '@/store/auth';
 import { generateAccessCode, createAccessCodeEmailBody, createMailtoLink } from '@/utils/accessCode';
 import type { FormTemplate, TeamMember } from '@/types';
+import api from '@/api/client';
 
 const formsStore = useFormsStore();
 const teamsStore = useTeamsStore();
@@ -216,20 +217,14 @@ const sendEmailToMember = async (form: FormTemplate, member: TeamMember) => {
       
       // Store access code in backend
       try {
-        await fetch(`/api/AccessCode/createAccessCode`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            accessCode,
-            formId: form._id,
-            teamId: form.teamId,
-            memberId: member.memberId,
-            memberEmail: member.email,
-            memberRole: member.role,
-            createdBy: currentAdminId.value,
-          }),
+        await api.accessCode.createAccessCode({
+          accessCode,
+          formId: form._id,
+          teamId: form.teamId!,
+          memberId: member.memberId,
+          memberEmail: member.email,
+          memberRole: member.role,
+          createdBy: currentAdminId.value!,
         });
       } catch (backendError) {
         console.error('Failed to store access code in backend:', backendError);

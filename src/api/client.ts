@@ -111,6 +111,10 @@ export const formTemplate = {
 
   getTemplatesByCreator(data: API.GetFormTemplatesByCreatorRequest) {
     return http.post<API.GetFormTemplatesByCreatorResponse>('/FormTemplate/getTemplatesByCreator', data);
+  },
+
+  getTemplate(data: { templateId: string }) {
+    return http.post<{ template: API.FormTemplate }>('/FormTemplate/getTemplate', data);
   }
 };
 
@@ -216,6 +220,25 @@ export const reviewCycle = {
   }
 };
 
+// AccessCode endpoints
+export const accessCode = {
+  createAccessCode(data: API.CreateAccessCodeRequest) {
+    return http.post<API.CreateAccessCodeResponse>('/AccessCode/createAccessCode', data);
+  },
+
+  getAccessCodeInfo(data: API.GetAccessCodeInfoRequest) {
+    return http.post<API.GetAccessCodeInfoResponse>('/AccessCode/getAccessCodeInfo', data);
+  },
+
+  submitFormResponse(data: API.SubmitFormResponseRequest) {
+    return http.post<API.SubmitFormResponseResponse>('/AccessCode/submitFormResponse', data);
+  },
+
+  getFormResponses(data: API.GetFormResponsesRequest) {
+    return http.post<API.GetFormResponsesResponse>('/AccessCode/getFormResponses', data);
+  }
+};
+
 // ReportSynthesis endpoints
 export const reportSynthesis = {
   ingestResponses(data: API.IngestResponsesRequest) {
@@ -244,6 +267,14 @@ export const reportSynthesis = {
 
   getReportsByTarget(data: API.GetReportsByTargetRequest) {
     return http.post<void>('/ReportSynthesis/getReportsByTarget', data);
+  },
+
+  generateFormTemplateReport(data: API.GenerateFormTemplateReportRequest) {
+    return http.post<API.GenerateFormTemplateReportResponse>('/ReportSynthesis/generateFormTemplateReport', data);
+  },
+
+  getReportByFormTemplate(data: API.GetReportByFormTemplateRequest) {
+    return http.post<API.GetReportByFormTemplateResponse>('/ReportSynthesis/getReportByFormTemplate', data);
   }
 };
 
@@ -253,7 +284,8 @@ export default {
   formTemplate,
   orgGraph,
   reviewCycle,
-  reportSynthesis
+  reportSynthesis,
+  accessCode
 };
 
 export { http };

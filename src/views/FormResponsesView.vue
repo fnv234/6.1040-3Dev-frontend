@@ -248,6 +248,7 @@ import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { useToast } from '@/composables/useToast';
+import api from '@/api/client';
 
 const router = useRouter();
 const formsStore = useFormsStore();
@@ -427,29 +428,16 @@ const generateReport = async () => {
       throw new Error('No current admin');
     }
 
-    // Call the sync-based API that handles everything
-    const response = await fetch('/api/ReportSynthesis/generateFormTemplateReport', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        formTemplateId: selectedFormId.value,
-        createdBy: currentAdminId.value,
-        anonymityFlag: true,
-        kThreshold: 3,
-      }),
+    // Call the API using the centralized API client
+    const response = await api.reportSynthesis.generateFormTemplateReport({
+      formTemplateId: selectedFormId.value,
+      createdBy: currentAdminId.value,
+      anonymityFlag: true,
+      kThreshold: 3,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to generate report');
-    }
-
-    // The sync returns the completed report via the respond action
-    const responseData = await response.json();
-    console.log('Full backend response:', responseData); // Debug log
-    const { report } = responseData;
+    console.log('Full backend response:', response.data); // Debug log
+    const { report } = response.data;
     console.log('Generated report:', report); // Debug log
     if (!report) {
       throw new Error('No report data received from backend');
@@ -508,21 +496,12 @@ const loadExistingReport = async () => {
   if (!selectedFormId.value) return;
 
   try {
-    const response = await fetch('/api/ReportSynthesis/getReportByFormTemplate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        formTemplate: selectedFormId.value,
-      }),
+    const response = await api.reportSynthesis.getReportByFormTemplate({
+      formTemplate: selectedFormId.value,
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.report) {
-        synthesizedReport.value = data.report;
-      }
+    if (response.data.report) {
+      synthesizedReport.value = response.data.report;
     }
   } catch (err) {
     // No existing report, which is fine
