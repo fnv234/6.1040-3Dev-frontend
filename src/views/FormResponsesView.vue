@@ -428,7 +428,7 @@ const generateReport = async () => {
     }
 
     // Call the sync-based API that handles everything
-    const response = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/ReportSynthesis/generateFormTemplateReport`, {
+    const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/generateFormTemplateReport`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -508,7 +508,7 @@ const loadExistingReport = async () => {
   if (!selectedFormId.value) return;
 
   try {
-    const response = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/ReportSynthesis/getReportByFormTemplate`, {
+    const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/getReportByFormTemplate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -216,7 +216,7 @@ const sendEmailToMember = async (form: FormTemplate, member: TeamMember) => {
       
       // Store access code in backend
       try {
-        await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/AccessCode/createAccessCode`, {
+        await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/createAccessCode`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

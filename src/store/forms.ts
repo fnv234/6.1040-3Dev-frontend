@@ -178,7 +178,7 @@ export const useFormsStore = () => {
   // API functions for form responses and access codes
   const getFormByAccessCode = async (accessCode: string) => {
     try {
-      const response = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/AccessCode/getAccessCodeInfo`, {
+      const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/getAccessCodeInfo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export const useFormsStore = () => {
       const { accessCodeInfo } = await response.json();
       
       // Get the form template
-      const formResponse = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/FormTemplate/getTemplate`, {
+      const formResponse = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/FormTemplate/getTemplate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -248,7 +248,7 @@ export const useFormsStore = () => {
     try {
       console.log('Submitting form response:', { accessCode, responses });
       
-      const response = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/AccessCode/submitFormResponse`, {
+      const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/submitFormResponse`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -285,7 +285,7 @@ export const useFormsStore = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.DEV ? '/api' : 'https://six-1040-3dev-backend.onrender.com/api'}/AccessCode/getFormResponses`, {
+      const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/getFormResponses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
