@@ -421,41 +421,6 @@ export interface GetReportsByTargetRequest {
   target: string;
 }
 
-export interface GetReportByFormTemplateRequest {
-  formTemplate: string;
-}
-
-export interface GetReportByFormTemplateResponse {
-  report: GeneratedReport | null;
-}
-
-export interface GenerateFormTemplateReportRequest {
-  formTemplateId: string;
-  createdBy: string;
-  anonymityFlag?: boolean;
-  kThreshold?: number;
-}
-
-export interface GeneratedReport {
-  _id: string;
-  formTemplate: string;
-  textSummary: string;
-  keyThemes: string[];
-  keyQuotes: string[];
-  metrics: {
-    totalResponses: number;
-    uniqueRespondents: number;
-    questionsAnswered: number;
-    averageResponseLength: number;
-    roleDistribution?: Record<string, number>;
-  };
-  createdAt: string;
-}
-
-export interface GenerateFormTemplateReportResponse {
-  report: GeneratedReport;
-}
-
 // AccessCode
 
 export interface AccessCodeInfo {

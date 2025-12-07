@@ -1,7 +1,7 @@
 import { ref, computed, watch } from 'vue';
 import type { FormTemplate } from '@/types';
 import { useAuthStore } from './auth';
-import api, { formTemplate as formTemplateAPI } from '@/api/client';
+import { formTemplate as formTemplateAPI } from '@/api/client';
 
 const forms = ref<FormTemplate[]>([]);
 const loading = ref(false);
@@ -178,14 +178,34 @@ export const useFormsStore = () => {
   // API functions for form responses and access codes
   const getFormByAccessCode = async (accessCode: string) => {
     try {
-      const response = await api.accessCode.getAccessCodeInfo({ accessCode });
-      const { accessCodeInfo } = response.data;
+      const response = await fetch(`/api/AccessCode/getAccessCodeInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessCode }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid access code');
+      }
+
+      const { accessCodeInfo } = await response.json();
       
       // Get the form template
-      const formResponse = await api.formTemplate.getTemplate({ 
-        templateId: accessCodeInfo.formId 
+      const formResponse = await fetch(`/api/FormTemplate/getTemplate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ templateId: accessCodeInfo.formId }),
       });
-      const { template } = formResponse.data;
+
+      if (!formResponse.ok) {
+        throw new Error('Form not found');
+      }
+
+      const { template } = await formResponse.json();
       
       return {
         accessCodeInfo,
@@ -228,14 +248,30 @@ export const useFormsStore = () => {
     try {
       console.log('Submitting form response:', { accessCode, responses });
       
-      const response = await api.accessCode.submitFormResponse({ 
-        accessCode,
-        responses 
+      const response = await fetch(`/api/AccessCode/submitFormResponse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          accessCode,
+          responses 
+        }),
       });
 
-      console.log('Successful response:', response.data);
+      console.log('Response status:', response.status);
+      console.log('Response OK:', response.ok);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backend error response:', errorData);
+        throw new Error(errorData.error || 'Failed to submit form response');
+      }
+
+      const result = await response.json();
+      console.log('Successful response:', result);
       
-      const { responseId } = response.data;
+      const { responseId } = result;
       return responseId;
     } catch (error) {
       console.error('Error submitting form response:', error);
@@ -249,12 +285,24 @@ export const useFormsStore = () => {
     }
 
     try {
-      const response = await api.accessCode.getFormResponses({ 
-        formId,
-        createdBy: currentAdminId.value 
+      const response = await fetch(`/api/AccessCode/getFormResponses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          formId,
+          createdBy: currentAdminId.value 
+        }),
       });
 
-      const { responses } = response.data;
+      if (!response.ok) {
+        // Return empty array for forms without responses instead of throwing
+        // This is normal when a form hasn't been sent yet or has no access codes
+        return [];
+      }
+
+      const { responses } = await response.json();
       return responses;
     } catch (error) {
       // Silently return empty array - errors are expected for forms without responses
