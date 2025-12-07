@@ -11,22 +11,23 @@
       <!-- Summary Cards -->
       <div class="stats-grid">
         <div class="stat-card card">
+          <h3>Active Teams</h3>
+          <p class="stat-value">{{ stats.activeTeams }}</p>
+        </div>
+        <div class="stat-card card">
           <h3>Total Forms Sent</h3>
           <p class="stat-value">{{ stats.totalForms }}</p>
         </div>
         <div class="stat-card card">
-          <h3>Total Responses</h3>
+          <h3>Total Responses Across All Forms</h3>
           <p class="stat-value">{{ stats.totalResponses }}</p>
         </div>
         <div class="stat-card card">
-          <h3>Response Rate</h3>
-          <p class="stat-value">{{ stats.responseRate }}%</p>
-        </div>
-        <div class="stat-card card">
-          <h3>Active Teams</h3>
-          <p class="stat-value">{{ stats.activeTeams }}</p>
-        </div>
+        <h3>Total Completed Forms</h3>
+        <p class="stat-value">{{ stats.completedForms }}</p>
       </div>
+      </div>
+      
 
       <!-- Response Rate Chart -->
       <div v-if="chartData.labels.length > 0" class="section">
@@ -74,20 +75,8 @@
 
       <!-- Quick Actions -->
       <div class="section">
-        <h2>Quick Actions</h2>
+        
         <div class="actions-grid">
-          <router-link to="/forms" class="action-card card">
-            <h3>My Forms</h3>
-            <p class="text-secondary">View and manage your feedback forms</p>
-          </router-link>
-          <router-link to="/forms/new" class="action-card card">
-            <h3>Create New Form</h3>
-            <p class="text-secondary">Build a customizable feedback form</p>
-          </router-link>
-          <router-link to="/teams" class="action-card card">
-            <h3>Manage Teams</h3>
-            <p class="text-secondary">Add or edit team members</p>
-          </router-link>
         </div>
       </div>
     </div>
@@ -160,9 +149,18 @@ const stats = computed(() => {
     ? Math.round((totalResponses / totalExpectedResponses) * 100) 
     : 0;
 
+  const completedForms = forms.value.reduce((acc, form) => {
+    const team = teams.value.find(t => t._id === form.teamId);
+    const teamSize = team?.members?.length || 0;
+    const responses = form._id ? (formResponseCounts.value[form._id] || 0) : 0;
+    // consider a form "completed" when responses meet or exceed team size (guard teamSize > 0)
+    return acc + (teamSize > 0 && responses >= teamSize ? 1 : 0);
+  }, 0);
+
   return {
     totalForms,
     totalResponses,
+    completedForms, 
     responseRate: Math.min(100, responseRate), // Cap at 100%
     activeTeams
   };

@@ -242,7 +242,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: rgba(214, 182, 245, 0.754);
+  background: rgba(243, 232, 255, 0.754);
   /* background: var(--bg-secondary); */
   color: var(--text);
   line-height: 1.6;

@@ -213,7 +213,8 @@
                   {{ getQuestionPrompt(questionIndex) }}
                 </div>
                 <div class="response-text">
-                  {{ responseText }}
+                <p>Response:  {{ responseText }} </p>
+                 
                 </div>
               </div>
             </div>
@@ -563,14 +564,14 @@ const loadExistingReport = async () => {
 .form-selector {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: rgba(105, 98, 98, 0.05);
+  background: rgba(255, 255, 255, 0.91);
   border-radius: 8px;
 }
 
 .form-selector label {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--title-primary);
+  color:  var(--primary);
   font-weight: 500;
 }
 
@@ -580,21 +581,21 @@ const loadExistingReport = async () => {
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: rgba(255, 255, 255, 0.77);
+  color: var(--primary);
   font-size: 1rem;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-select:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color:  rgba(0, 0, 0, 1);
   box-shadow: 0 0 0 2px rgba(126, 162, 170, 0.2);
 }
 
 .form-select option {
   background: #1f2937;
-  color: white;
+  color: black;
 }
 
 .no-forms-with-responses {
@@ -655,7 +656,7 @@ const loadExistingReport = async () => {
 .stat {
   text-align: center;
   padding: 1rem;
-  background: rgba(249, 244, 244, 0.91);
+  background: rgba(255, 255, 255, 0.91);
   border-radius: 6px;
 }
 
@@ -699,7 +700,7 @@ const loadExistingReport = async () => {
 }
 
 .response-card {
-  background: rgba(239, 239, 239, 0.91);
+  background: rgba(198, 253, 190, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 1.5rem;
@@ -725,7 +726,7 @@ const loadExistingReport = async () => {
 
 .response-role {
   background: var(--primary);
-  color: white;
+  color: black;
   padding: 0.25rem 0.75rem;
   border-radius: 15px;
   font-size: 0.875rem;
@@ -740,6 +741,7 @@ const loadExistingReport = async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  color: black;
 }
 
 .question-response {
@@ -755,7 +757,7 @@ const loadExistingReport = async () => {
 }
 
 .response-text {
-  color: white;
+  color: black;
   line-height: 1.5;
   padding: 0.5rem 0;
 }
