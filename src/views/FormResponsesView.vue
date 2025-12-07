@@ -343,6 +343,10 @@ const loadForms = async () => {
     // Load response counts for all forms to determine which have responses
     await loadFormResponseCounts();
 
+    console.log('Available forms:', forms.value);
+    console.log('Response counts:', formsResponseCounts.value);
+    // Auto-selection is now handled by the watcher above
+
   } catch (err: any) {
     error.value = err.message || 'Failed to load forms';
   } finally {
@@ -478,6 +482,53 @@ const closeSynthesizedReport = () => {
 const toggleReportMinimize = () => {
   reportMinimized.value = !reportMinimized.value;
 };
+
+// Watch for forms to be loaded, then auto-select first form with responses
+watch(() => formsStore.loaded.value, (isLoaded) => {
+  if (isLoaded && forms.value.length > 0) {
+    console.log('Forms are loaded, checking for responses');
+    // Load response counts if not already loaded
+    if (Object.keys(formsResponseCounts.value).length === 0) {
+      loadFormResponseCounts();
+    } else {
+      checkAndSelectFormWithResponses();
+    }
+  }
+});
+
+// Watch for response counts to be calculated
+watch(formsResponseCounts, (counts) => {
+  if (Object.keys(counts).length > 0 && forms.value.length > 0) {
+    console.log('Response counts calculated, checking for forms with responses');
+    checkAndSelectFormWithResponses();
+  }
+}, { deep: true });
+
+const checkAndSelectFormWithResponses = () => {
+  const formWithResponses = forms.value.find(form => 
+    form._id && formsResponseCounts.value[form._id] > 0
+  );
+  
+  if (formWithResponses && formWithResponses._id) {
+    console.log('Auto-selecting form with responses:', formWithResponses._id);
+    selectedFormId.value = formWithResponses._id;
+  } else {
+    console.log('No forms with responses found');
+  }
+};
+
+// Watch for changes to selectedFormId to automatically load responses
+watch(selectedFormId, async (newFormId) => {
+  if (newFormId) {
+    await loadResponses();
+  } else {
+    // Clear data when no form is selected
+    responses.value = [];
+    formQuestions.value = [];
+    synthesizedReport.value = null;
+    reportMinimized.value = false;
+  }
+});
 
 // Watch for changes to synthesizedReport to debug disappearing issue
 watch(synthesizedReport, (newValue, oldValue) => {

@@ -22,7 +22,9 @@ export function useTeamsStore() {
   }, { immediate: true });
 
   async function loadTeamsFromBackend() {
-    if (loading.value) return;
+    if (loading.value) {
+      return;
+    }
     
     loading.value = true;
     try {

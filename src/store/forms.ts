@@ -16,7 +16,10 @@ export const useFormsStore = () => {
 
   const storageKey = computed(() => {
     if (currentAdminId.value) {
-      return `hr_feedback_forms_${currentAdminId.value}`;
+      // Use session-specific key like auth store
+      const sessionId = sessionStorage.getItem('hrSessionId');
+      const sessionSuffix = sessionId ? `_${sessionId}` : '';
+      return `hr_feedback_forms_${currentAdminId.value}${sessionSuffix}`;
     }
     return null;
   });
@@ -281,11 +284,14 @@ export const useFormsStore = () => {
 
   const getFormResponses = async (formId: string) => {
     if (!currentAdminId.value) {
+      console.error('getFormResponses: No current admin ID');
       throw new Error('No current admin');
     }
 
     try {
-      const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/getFormResponses`, {
+      const apiUrl = `${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/AccessCode/getFormResponses`;
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,16 +302,16 @@ export const useFormsStore = () => {
         }),
       });
 
+
       if (!response.ok) {
-        // Return empty array for forms without responses instead of throwing
-        // This is normal when a form hasn't been sent yet or has no access codes
+        console.error('getFormResponses: API call failed with status:', response.status);
         return [];
       }
 
-      const { responses } = await response.json();
-      return responses;
+      const result = await response.json();
+      return result.responses || [];
     } catch (error) {
-      // Silently return empty array - errors are expected for forms without responses
+      console.error('getFormResponses: Error occurred:', error);
       return [];
     }
   };
