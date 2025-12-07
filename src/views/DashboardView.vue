@@ -32,7 +32,7 @@
       <!-- Response Rate Chart -->
       <div v-if="chartData.labels.length > 0" class="section">
         <div class="card">
-          <h2>Response Rate Trends</h2>
+          <h2>Top Forms by Response Rate</h2>
           <div class="chart-container">
             <canvas ref="chartCanvas"></canvas>
           </div>
@@ -65,9 +65,7 @@
             <div v-if="team.sentimentSummary" class="sentiment-summary">
               <h4>AI Summary</h4>
               <p class="text-secondary">{{ team.sentimentSummary }}</p>
-              <GradientButton class="btn-sm" @click="regenerateSummary(team.teamId)" variant="variant">
-                Regenerate with LLM
-              </GradientButton>
+              
             </div>
           </div>
         </div>
@@ -167,8 +165,27 @@ const stats = computed(() => {
 });
 
 const chartData = computed(() => {
-  const labels = teams.value.map(t => t.name).slice(0, 5); // Show top 5 teams
-  const data = teamStats.value.map(t => t.responseRate).slice(0, 5);
+  // Get forms with responses, calculate their response rates, and sort by response count
+  const formsWithData = forms.value
+    .filter(form => form._id && formResponseCounts.value[form._id] > 0)
+    .map(form => {
+      const team = teams.value.find(t => t._id === form.teamId);
+      const teamSize = team?.members?.length || 0;
+      const responses = form._id ? (formResponseCounts.value[form._id] || 0) : 0;
+      const responseRate = teamSize > 0 ? Math.round((responses / teamSize) * 100) : 0;
+      
+      return {
+        name: form.name,
+        responses,
+        responseRate: Math.min(100, responseRate), // Cap at 100%
+        teamName: team?.name || 'Unknown Team'
+      };
+    })
+    .sort((a, b) => b.responses - a.responses) // Sort by response count descending
+    .slice(0, 3); // Take top 3
+  
+  const labels = formsWithData.map(f => `${f.name} (${f.teamName})`);
+  const data = formsWithData.map(f => f.responseRate);
   
   return { labels, data };
 });
@@ -197,6 +214,12 @@ const initChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0
+          }
+        },
         y: {
           beginAtZero: true,
           max: 100,
