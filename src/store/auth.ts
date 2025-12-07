@@ -37,9 +37,10 @@ function clearCurrentAdmin() {
   localStorage.removeItem(ADMIN_EMAIL_KEY);
 }
 
-const currentAdmin = ref<HRAdmin | null>(loadCurrentAdmin());
+// Remove global currentAdmin ref - it will be created per store instance
 
 export function useAuthStore() {
+  const currentAdmin = ref<HRAdmin | null>(loadCurrentAdmin());
   const isAuthenticated = computed(() => !!currentAdmin.value);
 
   async function register(email: string, password: string): Promise<HRAdmin> {

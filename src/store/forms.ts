@@ -3,16 +3,17 @@ import type { FormTemplate } from '@/types';
 import { useAuthStore } from './auth';
 import api, { formTemplate as formTemplateAPI } from '@/api/client';
 
-const forms = ref<FormTemplate[]>([]);
-const loading = ref(false);
-const loaded = ref(false);
-
-// Store access codes for each form and team member
-const formAccessCodes = ref<Record<string, Record<string, string>>>({});
-
 export const useFormsStore = () => {
   const auth = useAuthStore();
   const currentAdminId = computed(() => auth.currentAdmin.value?._id);
+  
+  // Move state inside the function to create independent instances
+  const forms = ref<FormTemplate[]>([]);
+  const loading = ref(false);
+  const loaded = ref(false);
+  
+  // Store access codes for each form and team member
+  const formAccessCodes = ref<Record<string, Record<string, string>>>({});
 
   const storageKey = computed(() => {
     if (currentAdminId.value) {
