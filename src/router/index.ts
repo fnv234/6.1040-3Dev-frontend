@@ -73,8 +73,13 @@ const router = createRouter({
 
 // Simple auth guard (expand with real token validation)
 router.beforeEach((to, _from, next) => {
-  // Check if user is authenticated by verifying localStorage data exists and is valid
-  const adminData = localStorage.getItem('hrCurrentAdmin');
+  // Check if user is authenticated by verifying session-specific localStorage data exists and is valid
+  const getSessionKey = (baseKey: string) => {
+    const sessionId = sessionStorage.getItem('hrSessionId');
+    return sessionId ? `${baseKey}_${sessionId}` : baseKey;
+  };
+  
+  const adminData = localStorage.getItem(getSessionKey('hrCurrentAdmin'));
   let isAuthenticated = false;
   
   if (adminData) {
@@ -83,9 +88,9 @@ router.beforeEach((to, _from, next) => {
       isAuthenticated = parsed && parsed._id && parsed.email;
     } catch {
       // Invalid data in localStorage, clear it
-      localStorage.removeItem('hrCurrentAdmin');
-      localStorage.removeItem('hrAdminId');
-      localStorage.removeItem('hrAdminEmail');
+      localStorage.removeItem(getSessionKey('hrCurrentAdmin'));
+      localStorage.removeItem(getSessionKey('hrAdminId'));
+      localStorage.removeItem(getSessionKey('hrAdminEmail'));
     }
   }
   
