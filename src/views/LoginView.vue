@@ -6,7 +6,7 @@
 
     <div class="login-overlay">
       <div class="login-card card">
-        <h1>360 Feedback Admin</h1>
+        <h1>360 Feedback Login</h1>
         <p class="text-secondary">HR Administration Portal</p>
         
         <!-- Login/Signup Form -->
