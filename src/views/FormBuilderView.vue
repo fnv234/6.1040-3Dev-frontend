@@ -6,9 +6,7 @@
         <GradientButton @click="saveFormDraft" :disabled="!canSave" variant="variant">
           Save
         </GradientButton>
-        <GradientButton @click="saveAndSendForm" :disabled="!canSend">
-          Save &amp; Send Form
-        </GradientButton>
+        
       </div>
     </div>
 
@@ -414,7 +412,8 @@ const saveAndSendForm = async () => {
 .empty-questions {
   text-align: center;
   padding: 2rem;
-  background: var(--bg-secondary);
+  background: rgba(190, 231, 254, 0.568);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -478,12 +477,12 @@ const saveAndSendForm = async () => {
 }
 
 .preview-section {
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.878);
 }
 
 .form-preview {
   padding: 1rem;
-  background: white;
+  background: rgba(190, 231, 254, 0.568);
   border-radius: 6px;
   border: 1px solid var(--border);
 }

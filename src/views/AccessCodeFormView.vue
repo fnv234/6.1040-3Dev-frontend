@@ -1,9 +1,5 @@
 <template>
   <div class="access-code-form-page">
-    <div class="access-code-form-bg">
-      <ShaderAnimation playOnce />
-    </div>
-
     <div class="access-code-form-overlay">
       <div class="access-code-form-card card">
         <div v-if="loading" class="loading-state">
@@ -182,7 +178,6 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import GradientButton from '@/components/ui/GradientButton.vue';
-import ShaderAnimation from '@/components/ui/ShaderAnimation.vue';
 import { useFormsStore } from '@/store/forms';
 import { useToast } from '@/composables/useToast';
 
@@ -331,11 +326,6 @@ const goBack = () => {
   overflow: hidden;
 }
 
-.access-code-form-bg {
-  position: absolute;
-  inset: 0;
-}
-
 .access-code-form-overlay {
   position: relative;
   z-index: 1;
@@ -349,7 +339,7 @@ const goBack = () => {
 .access-code-form-card {
   width: 100%;
   max-width: 800px;
-  background: rgba(3, 33, 140, 0.66);
+  background: #4398ffff;
   border-radius: 12px;
   padding: 2.5rem;
   opacity: 0;

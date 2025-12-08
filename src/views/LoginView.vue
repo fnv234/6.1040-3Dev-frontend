@@ -173,11 +173,15 @@ const handleAccessCodeSubmit = async () => {
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
+  background: red;
 }
 
 .login-shader-bg {
   position: absolute;
   inset: 0;
+  background: red;
+
+  
 }
 
 .login-overlay {
@@ -188,13 +192,14 @@ const handleAccessCodeSubmit = async () => {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  background: rgba(188, 228, 255, 0.93);
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
   text-align: center;
-  background: rgba(3, 33, 140, 0.66);
+  background: #4398ffff;
   border-radius: 12px;
   padding: 2.5rem;
   opacity: 0;

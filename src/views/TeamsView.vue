@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="page-header">
-      <h1>Team Management</h1>
+      <h1 id="tabTopHeading">Team Management</h1>
       <GradientButton @click="showCreateModal = true">+ Create Team</GradientButton>
     </div>
 
@@ -14,7 +14,7 @@
 };ary">
         Upload a JSON file with your employee roster to let OrgGraph infer team hierarchies.
         Expected format:
-        <code>{ "employees": [{ "id": "emp001", "manager": "mgr001", "teamName": "Engineering" }, ...] }</code>
+        <code>{ "employees": [{ "id": "emp001", "role": "manager", "email": "emp001@email.com", "teamName": "Engineering" }, ...] }</code>
       </p>
       <div class="org-upload-controls">
         <input type="file" accept="application/json" @change="onOrgFileSelected" />
@@ -141,14 +141,7 @@
           </div>
 
           <div class="form-group">
-            <label class="label" for="memberIds">Or add Member IDs (one per line) - legacy method</label>
-            <textarea
-              id="memberIds"
-              v-model="memberIdsText"
-              class="input textarea"
-              rows="4"
-              placeholder="emp001&#10;emp002&#10;emp003"
-            ></textarea>
+           
             <small class="text-secondary">Use this for quick entry without roles. Members with roles take priority.</small>
           </div>
 

@@ -33,57 +33,44 @@
       <div v-if="chartData.labels.length > 0" class="section">
         <div class="card">
           <h2>Top Forms by Response Rate</h2>
+          <p>A maximum of 3 forms will be displayed at once. </p>
           <div class="chart-container">
             <canvas ref="chartCanvas"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- Team Statistics -->
-      <div class="section">
-        <h2>Team Feedback Summary</h2>
-        <div v-if="teamStats.length === 0" class="empty-state card">
-          <p>No feedback data available yet.</p>
-          <router-link to="/teams"><GradientButton>Create a Team</GradientButton></router-link>
-        </div>
-        <div v-else class="team-list">
-          <div v-for="team in teamStats" :key="team.teamId" class="team-card card">
-            <div class="team-header">
-              <h3>{{ team.teamName }}</h3>
-              <span class="badge">{{ team.totalResponses }} responses</span>
-            </div>
-            <div class="team-stats">
-              <div class="stat-item">
-                <span class="stat-label">Response Rate:</span>
-                <span class="stat-value-inline">{{ team.responseRate }}%</span>
-              </div>
-              <div v-if="team.averageComfortLevel" class="stat-item">
-                <span class="stat-label">Avg Comfort Level:</span>
-                <span class="stat-value-inline">{{ team.averageComfortLevel.toFixed(1) }}/5</span>
-              </div>
-            </div>
-            <div v-if="team.sentimentSummary" class="sentiment-summary">
-              <h4>AI Summary</h4>
-              <p class="text-secondary">{{ team.sentimentSummary }}</p>
-              <GradientButton 
-                @click="regenerateSummary(team.teamId)" 
-                size="small" 
-                class="mt-2"
-                :disabled="loadingSummary[team.teamId]"
-              >
-                {{ loadingSummary[team.teamId] ? 'Generating...' : 'Regenerate Summary' }}
-              </GradientButton>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
-      <!-- Quick Actions -->
-      <div class="section">
-        
-        <div class="actions-grid">
-        </div>
-      </div>
+    <div class="dashboard-header">
+      <h1>Resource Guide for Administrators: How To Use 360Feedback</h1>
+      <h3>1. Create a Team</h3>
+      <p>You will need each team members ID, role, and email. You can enter details manually or import a JSON file with the instructed format. </p>
+      <h3>2. Create a Form</h3>
+      <p>Enter a variety of questions and designate the desired answer format as well as any role-sepcific questions. Save this form. </p>
+      <h3>3. Send the Form</h3>
+      <p>Email the form to all members of the team. They will receive unique passwords to access the form. All responses will be located in the Responses tab. </p>
+      <h3>4. Synthesize a Report</h3>
+      <p>Once at least 3 people on the team have responded, synthesize a report based on their answers with a single click! You will also have the option to email the response back to the team members or feel free to communicate the feedback directly. </p>
+      
+      
+       
+    </div>
+
+    <div class="dashboard-header">
+      <h1>FAQ</h1>
+      <h3 class="text-secondary">Do employees need to create accounts with 360Feedback to submit and receive feedback?</h3>
+      <p>No. Employees will receive unique access codes in their email to use. Only the administrator needs a 360Feedback account. </p>
+      <br>
+    <h3 class="text-secondary">Is user feedback anonymous? </h3>
+      <p>Feedback is not anonymous to administrators, but it is to the AI engine used to facilitate report synthesis. If a user is uncomfortable answering a question, they can leave it blank. </p>
+    
+      <br>
+      <h3 class="text-secondary">What is the purpose of this application?</h3>
+      <p>Team development. See <a href="https://en.wikipedia.org/wiki/360-degree_feedback">here</a> for insight. </p>
+    
+    </div>
+     
     </div>
   </div>
 </template>
@@ -283,81 +270,6 @@ onMounted(async () => {
     });
   }
 });
-
-// Add this near the top with your other refs
-const loadingSummary = ref<Record<string, boolean>>({});
-
-const regenerateSummary = async (teamId: string) => {
-  try {
-    // Set loading state
-    loadingSummary.value[teamId] = true;
-    
-    const team = teams.value.find(t => t._id === teamId);
-    if (!team) {
-      console.error('Team not found');
-      return;
-    }
-
-    console.log('Regenerating LLM summary for team:', teamId);
-
-    // Get all forms for this team
-    const teamForms = forms.value.filter(f => f.teamId === teamId);
-    
-    // Get all form responses for this team's forms
-    const responses = [];
-    for (const form of teamForms) {
-      if (form._id) {
-        const formResponses = await formsStore.getFormResponses(form._id);
-        responses.push(...formResponses);
-      }
-    }
-
-    // If no responses, show message and return
-    if (responses.length === 0) {
-      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
-      if (teamIndex !== -1) {
-        teamStats.value[teamIndex].sentimentSummary = 'No responses available to generate summary';
-      }
-      return;
-    }
-    
-    // Call the backend endpoint with form responses and timestamp
-    const response = await reportSynthesis.generateTeamSummary({
-      teamId,
-      teamName: team.name,
-      members: responses.map(r => ({
-        name: r.respondentName || 'Anonymous',
-        role: r.respondentRole || 'Team Member',
-        responses: r.answers
-      }))
-    });
-
-    if (response.data.summary) {
-      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
-      if (teamIndex !== -1) {
-        teamStats.value[teamIndex].sentimentSummary = 
-          `${response.data.summary}\n\n`;
-      }
-    } else {
-      console.error('Failed to generate summary:', response.data);
-      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
-      if (teamIndex !== -1) {
-        teamStats.value[teamIndex].sentimentSummary = 
-          'Failed to generate summary. Please try again.';
-      }
-    }
-  } catch (error) {
-    console.error('Error regenerating team summary:', error);
-    const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
-    if (teamIndex !== -1) {
-      teamStats.value[teamIndex].sentimentSummary = 
-        'Error generating summary. Please try again.';
-    }
-  } finally {
-    // Clear loading state
-    loadingSummary.value[teamId] = false;
-  }
-};
 </script>
 
 <style scoped>
@@ -385,7 +297,7 @@ const regenerateSummary = async (teamId: string) => {
 
 .stat-card {
   text-align: center;
-  background: rgba(222, 246, 255, 0.45);
+  background: rgba(252, 248, 248, 0.93);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -437,7 +349,6 @@ const regenerateSummary = async (teamId: string) => {
 
 .team-card {
   padding: 1.5rem;
-  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
 }
@@ -512,7 +423,6 @@ const regenerateSummary = async (teamId: string) => {
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
-  background: rgba(222, 246, 255, 0.45);
   border-radius: 12px;
   border: 1px solid rgba(103, 88, 74, 0.5);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
