@@ -65,8 +65,13 @@
             <div v-if="team.sentimentSummary" class="sentiment-summary">
               <h4>AI Summary</h4>
               <p class="text-secondary">{{ team.sentimentSummary }}</p>
-              <GradientButton @click="regenerateSummary(team.teamId)" size="small" class="mt-2">
-                Regenerate Summary
+              <GradientButton 
+                @click="regenerateSummary(team.teamId)" 
+                size="small" 
+                class="mt-2"
+                :disabled="loadingSummary[team.teamId]"
+              >
+                {{ loadingSummary[team.teamId] ? 'Generating...' : 'Regenerate Summary' }}
               </GradientButton>
             </div>
           </div>
@@ -279,40 +284,78 @@ onMounted(async () => {
   }
 });
 
+// Add this near the top with your other refs
+const loadingSummary = ref<Record<string, boolean>>({});
+
 const regenerateSummary = async (teamId: string) => {
-  console.log('Regenerating LLM summary for team:', teamId);
-  
   try {
-    // Find the team data
+    // Set loading state
+    loadingSummary.value[teamId] = true;
+    
     const team = teams.value.find(t => t._id === teamId);
     if (!team) {
-      alert('Team not found');
+      console.error('Team not found');
       return;
     }
 
-    // Prepare members data - use membersWithRoles if available, otherwise fallback
-    const members = (team.membersWithRoles || []).map(member => ({
-      name: member.email.split('@')[0], // Extract name from email
-      role: member.role || 'Team Member'
-    }));
+    console.log('Regenerating LLM summary for team:', teamId);
 
-    // Call the new backend endpoint
+    // Get all forms for this team
+    const teamForms = forms.value.filter(f => f.teamId === teamId);
+    
+    // Get all form responses for this team's forms
+    const responses = [];
+    for (const form of teamForms) {
+      if (form._id) {
+        const formResponses = await formsStore.getFormResponses(form._id);
+        responses.push(...formResponses);
+      }
+    }
+
+    // If no responses, show message and return
+    if (responses.length === 0) {
+      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
+      if (teamIndex !== -1) {
+        teamStats.value[teamIndex].sentimentSummary = 'No responses available to generate summary';
+      }
+      return;
+    }
+    
+    // Call the backend endpoint with form responses and timestamp
     const response = await reportSynthesis.generateTeamSummary({
       teamId,
       teamName: team.name,
-      members
+      members: responses.map(r => ({
+        name: r.respondentName || 'Anonymous',
+        role: r.respondentRole || 'Team Member',
+        responses: r.answers
+      }))
     });
 
-    if (response.data.success) {
-      // For now, just show the summary in an alert
-      // In a real implementation, you might want to store this somewhere
-      alert(`Team Summary: ${response.data.summary}`);
+    if (response.data.summary) {
+      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
+      if (teamIndex !== -1) {
+        teamStats.value[teamIndex].sentimentSummary = 
+          `${response.data.summary}\n\n`;
+      }
     } else {
-      alert('Failed to generate team summary');
+      console.error('Failed to generate summary:', response.data);
+      const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
+      if (teamIndex !== -1) {
+        teamStats.value[teamIndex].sentimentSummary = 
+          'Failed to generate summary. Please try again.';
+      }
     }
   } catch (error) {
     console.error('Error regenerating team summary:', error);
-    alert('Error generating team summary');
+    const teamIndex = teamStats.value.findIndex(t => t.teamId === teamId);
+    if (teamIndex !== -1) {
+      teamStats.value[teamIndex].sentimentSummary = 
+        'Error generating summary. Please try again.';
+    }
+  } finally {
+    // Clear loading state
+    loadingSummary.value[teamId] = false;
   }
 };
 </script>
