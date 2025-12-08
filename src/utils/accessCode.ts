@@ -39,17 +39,17 @@ You've been invited to provide feedback for "${formName}" as a member of the "${
 Your unique access code is: ${accessCode}
 
 To complete the feedback form:
-1. Go to the login page
+1. Go to the login page: https://threedev-360-feedback.onrender.com/login
 2. Click "Have an access code?"
 3. Enter your access code: ${accessCode}
 4. Complete the feedback form
 
-This access code is unique to you and should not be shared with others.
+This access code is unique to you and should not be shared with others. Please complete the form at your earliest convenience.
 
 Thank you for your participation!
 
 Best regards,
-HR Team`;
+${teamName} HR Team`;
 }
 
 /**
