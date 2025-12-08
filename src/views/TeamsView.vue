@@ -179,15 +179,15 @@ const formData = ref({
   membersWithRoles: [] as Array<{memberId: string, role: string, email: string}>
 });
 
-const memberIdsText = computed({
-  get: () => formData.value.members.join('\n'),
-  set: (value: string) => {
-    formData.value.members = value
-      .split('\n')
-      .map(id => id.trim())
-      .filter(id => id.length > 0);
-  }
-});
+// const memberIdsText = computed({
+//   get: () => formData.value.members.join('\n'),
+//   set: (value: string) => {
+//     formData.value.members = value
+//       .split('\n')
+//       .map(id => id.trim())
+//       .filter(id => id.length > 0);
+//   }
+// });
 
 const addMemberWithRole = () => {
   formData.value.membersWithRoles.push({ memberId: '', role: '', email: '' });

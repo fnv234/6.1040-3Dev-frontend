@@ -76,12 +76,9 @@
 </template>
 
 <script setup lang="ts">
-import GradientButton from '@/components/ui/GradientButton.vue';
 import { computed, ref, onMounted, nextTick } from 'vue';
-import type { TeamStatistics } from '@/types';
 import { useTeamsStore } from '@/store/teams';
 import { useFormsStore } from '@/store/forms';
-import { reportSynthesis } from '@/api/client';
 import Chart from 'chart.js/auto';
 
 const { teams } = useTeamsStore();
@@ -95,34 +92,34 @@ let chartInstance: Chart | null = null;
 // Store form response counts
 const formResponseCounts = ref<Record<string, number>>({});
 
-const teamStats = computed<TeamStatistics[]>(() => {
-  return teams.value.map(team => {
-    // Calculate real statistics from AccessCode form responses
-    const teamForms = forms.value.filter(f => f.teamId === team._id);
+// const teamStats = computed<TeamStatistics[]>(() => {
+//   return teams.value.map(team => {
+//     // Calculate real statistics from AccessCode form responses
+//     const teamForms = forms.value.filter(f => f.teamId === team._id);
     
-    // Count actual AccessCode responses for team forms
-    const totalResponses = teamForms.reduce((sum, form) => {
-      return sum + (formResponseCounts.value[form._id || ''] || 0);
-    }, 0);
+//     // Count actual AccessCode responses for team forms
+//     const totalResponses = teamForms.reduce((sum, form) => {
+//       return sum + (formResponseCounts.value[form._id || ''] || 0);
+//     }, 0);
     
-    // Calculate response rate based on team size
-    const teamSize = team.members?.length || 0;
-    const responseRate = teamSize > 0 && teamForms.length > 0
-      ? Math.round((totalResponses / (teamForms.length * teamSize)) * 100)
-      : 0;
+//     // Calculate response rate based on team size
+//     const teamSize = team.members?.length || 0;
+//     const responseRate = teamSize > 0 && teamForms.length > 0
+//       ? Math.round((totalResponses / (teamForms.length * teamSize)) * 100)
+//       : 0;
 
-    return {
-      teamId: team._id,
-      teamName: team.name,
-      totalResponses,
-      responseRate: Math.min(100, responseRate), // Cap at 100%
-      averageComfortLevel: totalResponses > 0 ? 4.2 : undefined, // Mock - integrate with real data
-      sentimentSummary: totalResponses > 0 
-        ? 'Team members report positive collaboration and clear communication. Areas for improvement include project planning and resource allocation.'
-        : undefined
-    };
-  });
-});
+//     return {
+//       teamId: team._id,
+//       teamName: team.name,
+//       totalResponses,
+//       responseRate: Math.min(100, responseRate), // Cap at 100%
+//       averageComfortLevel: totalResponses > 0 ? 4.2 : undefined, // Mock - integrate with real data
+//       sentimentSummary: totalResponses > 0 
+//         ? 'Team members report positive collaboration and clear communication. Areas for improvement include project planning and resource allocation.'
+//         : undefined
+//     };
+//   });
+// });
 
 const stats = computed(() => {
   const totalForms = forms.value.length;

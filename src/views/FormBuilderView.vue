@@ -191,9 +191,9 @@ const canSave = computed(() => {
   return form.name && form.questions.length > 0;
 });
 
-const canSend = computed(() => {
-  return form.name && form.teamId && form.questions.length > 0;
-});
+// const canSend = computed(() => {
+//   return form.name && form.teamId && form.questions.length > 0;
+// });
 
 // Get available roles from the selected team
 const availableRoles = computed(() => {
@@ -317,55 +317,55 @@ const saveFormDraft = () => {
   router.push('/forms');
 };
 
-const saveAndSendForm = async () => {
-  if (!canSend.value) return;
+// const saveAndSendForm = async () => {
+//   if (!canSend.value) return;
 
-  // Remove empty options for non-Multiple Choice questions
-  const processedQuestions: FeedbackQuestion[] = form.questions.map(q => {
-    const question: FeedbackQuestion = {
-      prompt: q.prompt,
-      type: q.type
-    };
+//   // Remove empty options for non-Multiple Choice questions
+//   const processedQuestions: FeedbackQuestion[] = form.questions.map(q => {
+//     const question: FeedbackQuestion = {
+//       prompt: q.prompt,
+//       type: q.type
+//     };
     
-    // Add options for Multiple Choice questions
-    if (q.type === 'Multiple Choice' && q.optionsDisplay) {
-      (question as any).options = q.optionsDisplay.split(',').map((opt: string) => opt.trim());
-    }
+//     // Add options for Multiple Choice questions
+//     if (q.type === 'Multiple Choice' && q.optionsDisplay) {
+//       (question as any).options = q.optionsDisplay.split(',').map((opt: string) => opt.trim());
+//     }
     
-    // Add target roles if specified
-    if (q.targetRoles && q.targetRoles.length > 0) {
-      question.targetRoles = q.targetRoles.filter(role => role.trim() !== '');
-    }
+//     // Add target roles if specified
+//     if (q.targetRoles && q.targetRoles.length > 0) {
+//       question.targetRoles = q.targetRoles.filter(role => role.trim() !== '');
+//     }
     
-    return question;
-  });
+//     return question;
+//   });
 
-  // Get current HR admin ID
-  const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
+//   // Get current HR admin ID
+//   const creatorId = localStorage.getItem('hrAdminId') || 'unknown';
 
-  const formTemplate: FormTemplate = {
-    name: form.name,
-    creator: creatorId,
-    teamId: form.teamId,
-    status: 'Sent',
-    createdDate: new Date().toISOString(),
-    questions: processedQuestions
-  };
+//   const formTemplate: FormTemplate = {
+//     name: form.name,
+//     creator: creatorId,
+//     teamId: form.teamId,
+//     status: 'Sent',
+//     createdDate: new Date().toISOString(),
+//     questions: processedQuestions
+//   };
 
-  // Save form and mark as sent
-  formsStore.saveForm(formTemplate);
+//   // Save form and mark as sent
+//   formsStore.saveForm(formTemplate);
   
-  // In production: 
-  // 1. Generate access codes for team members
-  // 2. Send emails to team members with form links and access codes
+//   // In production: 
+//   // 1. Generate access codes for team members
+//   // 2. Send emails to team members with form links and access codes
   
-  console.log('Saving and sending form:', formTemplate);
+//   console.log('Saving and sending form:', formTemplate);
   
-  const teamName = availableTeams.value.find(t => t._id === form.teamId)?.name;
-  alert(`Form created and sent to ${teamName}!`);
+//   const teamName = availableTeams.value.find(t => t._id === form.teamId)?.name;
+//   alert(`Form created and sent to ${teamName}!`);
   
-  router.push('/dashboard');
-};
+//   router.push('/dashboard');
+// };
 </script>
 
 <style scoped>
