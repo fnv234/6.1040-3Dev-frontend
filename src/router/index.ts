@@ -4,7 +4,6 @@ import DashboardView from '@/views/DashboardView.vue';
 import TeamsView from '@/views/TeamsView.vue';
 import FormBuilderView from '@/views/FormBuilderView.vue';
 import MyFormsView from '@/views/MyFormsView.vue';
-import FormAnswerView from '@/views/FormAnswerView.vue';
 import AccessCodeFormView from '@/views/AccessCodeFormView.vue';
 import FormResponsesView from '@/views/FormResponsesView.vue';
 
@@ -41,11 +40,6 @@ const routes: RouteRecordRaw[] = [
     name: 'FormBuilder',
     component: FormBuilderView,
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/form/:id',
-    name: 'FormAnswer',
-    component: FormAnswerView
   },
   {
     path: '/access-form/:code',

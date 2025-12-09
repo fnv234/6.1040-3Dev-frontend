@@ -26,18 +26,6 @@ export interface FeedbackQuestion {
   targetRoles?: string[]; // Optional: if specified, only members with these roles will see this question
 }
 
-export interface FeedbackForm {
-  _id?: string; // Optional because backend generates this
-  name: string;
-  creator: string; // User/HR Admin ID
-  reviewer: string; // Employee ID
-  target: string; // Employee ID
-  status: 'Created' | 'Sent' | 'Completed';
-  createdDate: string;
-  completedDate?: string;
-  questions: FeedbackQuestion[];
-}
-
 // FormTemplate type matching the backend FormTemplate concept
 export interface FormTemplate {
   _id?: string;

@@ -40,75 +40,9 @@ export interface FeedbackQuestion {
   type: QuestionType;
   targetRoles?: string[]; // Optional: if specified, only members with these roles will see this question
 }
-
-// FeedbackForm
-
-export interface CreateFeedbackFormRequest {
-  name: string;
-  creator: string;
-  reviewer: string;
-  target: string;
-  questions: FeedbackQuestion[];
-}
-
-export interface CreateFeedbackFormForTeamRequest {
-  name: string;
-  creator: string;
-  teamId: string;
-  questions: FeedbackQuestion[];
-}
-
-export interface CreateFeedbackFormForTeamResponse {
-  feedbackForms: string[];
-}
-
-export interface GetQuestionsForRoleRequest {
-  feedbackForm: string;
-  memberRole: string | null;
-}
-
-export interface GetQuestionsForRoleResponse {
-  questions: FeedbackQuestion[];
-}
-
-export interface CreateFeedbackFormResponse {
-  feedbackForm: string;
-}
-
-export interface SendFeedbackFormRequest {
-  feedbackForm: string;
-}
-
-export interface SendFeedbackFormResponse {
-  link: string;
-}
-
-export interface SubmitFeedbackFormRequest {
-  feedbackForm: string;
-  responses: Record<string, string>;
-}
-
-export interface GetFeedbackFormRequest {
-  id: string;
-}
+// FormTemplate (HR-admin templates stored by creator)
 
 export type FeedbackFormStatus = 'Created' | 'Sent' | 'Completed';
-
-export interface FeedbackForm {
-  _id: string;
-  reviewer: string;
-  target: string;
-  status: FeedbackFormStatus;
-  createdDate: string;
-  completedDate?: string;
-  questions: FeedbackQuestion[];
-}
-
-export interface GetFeedbackFormResponse {
-  feedbackForm: FeedbackForm;
-}
-
-// FormTemplate (HR-admin templates stored by creator)
 
 export interface FormTemplate {
   _id: string;

@@ -72,37 +72,6 @@ export const hrAdmin = {
   }
 };
 
-// FeedbackForm endpoints
-export const feedbackForm = {
-  createFeedbackForm(data: API.CreateFeedbackFormRequest) {
-    return http.post<API.CreateFeedbackFormResponse>('/FeedbackForm/createFeedbackForm', data);
-  },
-
-  sendFeedbackForm(data: API.SendFeedbackFormRequest) {
-    return http.post<API.SendFeedbackFormResponse>('/FeedbackForm/sendFeedbackForm', data);
-  },
-
-  submitFeedbackForm(data: API.SubmitFeedbackFormRequest) {
-    return http.post<void>('/FeedbackForm/submitFeedbackForm', data);
-  },
-
-  getFeedbackForm(data: API.GetFeedbackFormRequest) {
-    return http.post<API.GetFeedbackFormResponse>('/FeedbackForm/getFeedbackForm', data);
-  },
-
-  getFeedbackFormsByTarget(data: API.GetFeedbackFormsByTargetRequest) {
-    return http.post<void>('/FeedbackForm/getFeedbackFormsByTarget', data);
-  },
-
-  getFeedbackFormsByReviewer(data: API.GetFeedbackFormsByReviewerRequest) {
-    return http.post<void>('/FeedbackForm/getFeedbackFormsByReviewer', data);
-  },
-
-  getFeedbackFormsByCreator(data: API.GetFeedbackFormsByCreatorRequest) {
-    return http.post<API.GetFeedbackFormsByCreatorResponse>('/FeedbackForm/getFeedbackFormsByCreator', data);
-  }
-};
-
 // FormTemplate endpoints (for HR-admin templates)
 export const formTemplate = {
   createTemplate(data: API.CreateFormTemplateRequest) {
@@ -181,41 +150,6 @@ export const orgGraph = {
   }
 };
 
-// ReviewCycle endpoints
-export const reviewCycle = {
-  createCycle(data: API.CreateCycleRequest) {
-    return http.post<API.CreateCycleResponse>('/ReviewCycle/createCycle', data);
-  },
-
-  configureAssignments(data: API.ConfigureAssignmentsRequest) {
-    return http.post<void>('/ReviewCycle/configureAssignments', data);
-  },
-
-  addReviewers(data: API.AddReviewersRequest) {
-    return http.post<void>('/ReviewCycle/addReviewers', data);
-  },
-
-  activate(data: API.ActivateCycleRequest) {
-    return http.post<void>('/ReviewCycle/activate', data);
-  },
-
-  submitFeedback(data: API.SubmitFeedbackRequest) {
-    return http.post<void>('/ReviewCycle/submitFeedback', data);
-  },
-
-  close(data: API.CloseCycleRequest) {
-    return http.post<void>('/ReviewCycle/close', data);
-  },
-
-  getActiveCycles() {
-    return http.post<API.GetActiveCyclesResponse>('/ReviewCycle/getActiveCycles');
-  },
-
-  getReviewerTasks(data: API.GetReviewerTasksRequest) {
-    return http.post<API.GetReviewerTasksResponse>('/ReviewCycle/getReviewerTasks', data);
-  }
-};
-
 // ReportSynthesis endpoints
 export const reportSynthesis = {
   ingestResponses(data: API.IngestResponsesRequest) {
@@ -253,10 +187,8 @@ export const reportSynthesis = {
 
 export default {
   hrAdmin,
-  feedbackForm,
   formTemplate,
   orgGraph,
-  reviewCycle,
   reportSynthesis
 };
 
