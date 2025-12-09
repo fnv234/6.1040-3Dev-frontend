@@ -97,60 +97,81 @@
           
           <div v-show="!reportMinimized" class="report-content">
             <div class="report-meta">
-              <span class="report-date">Generated: {{ formatDate(synthesizedReport.createdAt) }}</span>
+              <span class="report-date">📅 Generated: {{ formatDate(synthesizedReport.createdAt) }}</span>
+              <span class="report-form-name">📋 {{ selectedForm?.name }}</span>
             </div>
 
             <div v-if="synthesizedReport.keyThemes && synthesizedReport.keyThemes.length > 0" class="report-themes">
-              <h4>Key Themes</h4>
+              <h4>🎯 Key Themes Identified</h4>
+              <p class="section-description">The most prominent themes emerging from team feedback:</p>
               <div class="themes-list">
-                <span v-for="theme in synthesizedReport.keyThemes" :key="theme" class="theme-tag">
+                <span v-for="(theme, index) in synthesizedReport.keyThemes" :key="theme" class="theme-tag">
+                  <span class="theme-number">{{ index + 1 }}</span>
                   {{ theme }}
                 </span>
               </div>
             </div>
 
             <div class="report-summary">
-              <h4>Summary</h4>
+              <h4>📊 Analysis & Insights</h4>
+              <p class="section-description">Synthesized findings from {{ synthesizedReport.metrics?.totalResponses || responses.length }} team responses:</p>
               <div class="summary-text">
                 {{ synthesizedReport.textSummary }}
               </div>
             </div>
 
             <div v-if="synthesizedReport.keyQuotes && synthesizedReport.keyQuotes.length > 0" class="report-quotes">
-              <h4>Key Quotes</h4>
+              <h4>💬 Notable Feedback Excerpts</h4>
+              <p class="section-description">Representative quotes from team members:</p>
               <ul class="quotes-list">
                 <li v-for="(quote, index) in synthesizedReport.keyQuotes" :key="index" class="quote-item">
-                  "{{ quote }}"
+                  <span class="quote-number">{{ index + 1 }}</span>
+                  <span class="quote-text">"{{ quote }}"</span>
                 </li>
               </ul>
             </div>
 
             <div v-if="synthesizedReport.metrics" class="report-metrics">
-              <h4>Metrics</h4>
+              <h4>📈 Response Metrics</h4>
               <div class="metrics-grid">
                 <div class="metric-item">
-                  <span class="metric-label">Total Responses:</span>
-                  <span class="metric-value">{{ synthesizedReport.metrics.totalResponses }}</span>
+                  <div class="metric-icon">👥</div>
+                  <div class="metric-content">
+                    <span class="metric-value">{{ synthesizedReport.metrics.totalResponses }}</span>
+                    <span class="metric-label">Total Responses</span>
+                  </div>
                 </div>
                 <div class="metric-item">
-                  <span class="metric-label">Unique Respondents:</span>
-                  <span class="metric-value">{{ synthesizedReport.metrics.uniqueRespondents }}</span>
+                  <div class="metric-icon">🎯</div>
+                  <div class="metric-content">
+                    <span class="metric-value">{{ synthesizedReport.metrics.uniqueRespondents }}</span>
+                    <span class="metric-label">Unique Respondents</span>
+                  </div>
                 </div>
                 <div class="metric-item">
-                  <span class="metric-label">Questions Answered:</span>
-                  <span class="metric-value">{{ synthesizedReport.metrics.questionsAnswered }}</span>
+                  <div class="metric-icon">❓</div>
+                  <div class="metric-content">
+                    <span class="metric-value">{{ synthesizedReport.metrics.questionsAnswered }}</span>
+                    <span class="metric-label">Questions Covered</span>
+                  </div>
                 </div>
                 <div v-if="synthesizedReport.metrics.averageResponseLength" class="metric-item">
-                  <span class="metric-label">Avg Response Length:</span>
-                  <span class="metric-value">{{ Math.round(synthesizedReport.metrics.averageResponseLength) }} chars</span>
+                  <div class="metric-icon">📝</div>
+                  <div class="metric-content">
+                    <span class="metric-value">{{ Math.round(synthesizedReport.metrics.averageResponseLength) }}</span>
+                    <span class="metric-label">Avg Response Length</span>
+                  </div>
                 </div>
               </div>
               <div v-if="synthesizedReport.metrics.roleDistribution" class="role-distribution">
-                <h5>Response Distribution by Role</h5>
+                <h5>👔 Participation by Role</h5>
                 <div class="role-dist-grid">
                   <div v-for="(count, role) in synthesizedReport.metrics.roleDistribution" :key="role" class="role-dist-item">
-                    <span class="role-name">{{ role }}:</span>
-                    <span class="role-count">{{ count }}</span>
+                    <span class="role-name">{{ role }}</span>
+                    <div class="role-count-bar">
+                      <div class="role-count-fill" :style="{ width: (count / synthesizedReport.metrics.totalResponses * 100) + '%' }"></div>
+                      <span class="role-count">{{ count }} response{{ count !== 1 ? 's' : '' }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -233,12 +254,6 @@
           Back to My Forms
         </GradientButton>
       </div>
-
-      <!-- No Form Selected -->
-      
-
-      <!-- No Forms -->
-      
     </div>
   </div>
 </template>
@@ -513,8 +528,6 @@ const generateReport = async () => {
     generatingReport.value = false;
   }
 };
-
-// Close function removed - reports now persist and can only be minimized
 
 const toggleReportMinimize = () => {
   reportMinimized.value = !reportMinimized.value;
@@ -950,23 +963,6 @@ const onFormChange = async () => {
   border-color: var(--primary);
 }
 
-.btn-close-report {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.btn-close-report:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--error);
-  color: var(--error);
-}
-
 .report-content {
   display: flex;
   flex-direction: column;
@@ -974,65 +970,123 @@ const onFormChange = async () => {
 }
 
 .report-meta {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
   color: var(--text-secondary);
   font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.report-date, .report-form-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .report-themes {
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  border-left: 4px solid var(--primary);
 }
 
 .report-themes h4 {
   color: var(--title-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  font-style: italic;
 }
 
 .themes-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .theme-tag {
-  padding: 0.5rem 1rem;
-  background: var(--primary);
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.theme-number {
+  background: rgba(255, 255, 255, 0.2);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .report-summary {
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  border-left: 4px solid #10b981;
 }
 
 .report-summary h4 {
   color: var(--title-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .summary-text {
   color: var(--text);
   line-height: 1.8;
   white-space: pre-wrap;
+  font-size: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
 }
 
 .report-quotes {
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  border-left: 4px solid #f59e0b;
 }
 
 .report-quotes h4 {
   color: var(--title-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .quotes-list {
@@ -1041,90 +1095,171 @@ const onFormChange = async () => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .quote-item {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-left: 3px solid var(--primary);
-  border-radius: 4px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
   color: var(--text);
   font-style: italic;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+}
+
+.quote-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(4px);
+}
+
+.quote-number {
+  background: #f59e0b;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.quote-text {
+  flex: 1;
+  line-height: 1.6;
 }
 
 .report-metrics {
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  border-left: 4px solid #8b5cf6;
 }
 
 .report-metrics h4 {
   color: var(--title-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .metric-item {
   display: flex;
-  justify-content: space-between;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.metric-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .metric-label {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .metric-value {
   color: var(--primary);
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
 .role-distribution {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .role-distribution h5 {
   color: var(--title-primary);
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 1rem 0;
   font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .role-dist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .role-dist-item {
   display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .role-name {
   color: var(--text);
   font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.role-count-bar {
+  position: relative;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+}
+
+.role-count-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  transition: width 0.5s ease;
+  opacity: 0.3;
 }
 
 .role-count {
-  color: var(--primary);
+  position: relative;
+  z-index: 1;
+  color: var(--text);
   font-weight: 600;
+  font-size: 0.875rem;
 }
 
 /* Empty States */
