@@ -596,7 +596,7 @@ const loadExistingReport = async () => {
 }
 
 .responses-header h1 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   color: var(--title-primary);
   margin-bottom: 0.5rem;
 }
@@ -659,7 +659,7 @@ const loadExistingReport = async () => {
 }
 
 .no-forms-with-responses h3 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   color: var(--title-primary);
   margin-bottom: 1rem;
 }
@@ -682,8 +682,9 @@ const loadExistingReport = async () => {
 }
 
 .responses-summary h2 {
+  font-family: 'Cal Sans', sans-serif;
   color: var(--title-primary);
-  margin: 0;
+  margin-bottom: 1rem;
 }
 
 .btn-generate-report {
@@ -834,6 +835,7 @@ const loadExistingReport = async () => {
 }
 
 .report-header h3 {
+  font-family: 'Cal Sans', sans-serif;
   color: var(--title-primary);
   margin: 0;
   font-size: 1.5rem;

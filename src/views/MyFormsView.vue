@@ -274,7 +274,7 @@ const sendEmailToMember = async (form: FormTemplate, member: TeamMember) => {
 }
 
 .page-header h1 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   color: var(--title-primary);
   margin-bottom: 0.25rem;
 }
@@ -667,7 +667,7 @@ const sendEmailToMember = async (form: FormTemplate, member: TeamMember) => {
 }
 
 .modal-header h2 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   margin: 0 0 0.25rem 0;
   color: var(--title-primary);
 }

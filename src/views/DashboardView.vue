@@ -359,7 +359,7 @@ onMounted(async () => {
 }
 
 .dashboard-title {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
   background: var(--gradient-1);
@@ -485,7 +485,7 @@ onMounted(async () => {
 }
 
 .section h2 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--title-primary);

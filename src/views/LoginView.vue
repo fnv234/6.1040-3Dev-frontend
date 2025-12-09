@@ -218,7 +218,7 @@ const handleAccessCodeSubmit = async () => {
 }
 
 .login-card h1 {
-  font-family: 'Petit Formal Script', cursive;
+  font-family: 'Cal Sans', sans-serif;
   margin-bottom: 0.5rem;
   color: var(--title-primary);
 }
