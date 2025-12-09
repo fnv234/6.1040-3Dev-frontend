@@ -69,3 +69,54 @@ export function createMailtoLink(
   
   return `mailto:?subject=${encodedSubject}&${emailField}=${encodedEmails}&body=${encodedBody}`;
 }
+
+/**
+ * Create email body with synthesized report
+ */
+export function createReportEmailBody(
+  formName: string,
+  teamName: string,
+  report: any,
+  recipientName?: string
+): string {
+  const greeting = recipientName ? `Hello ${recipientName},` : 'Hello,';
+  
+  // Format themes
+  const themesText = report.keyThemes && report.keyThemes.length > 0
+    ? `\n\nKey Themes:\n${report.keyThemes.map((theme: string, i: number) => `${i + 1}. ${theme}`).join('\n')}`
+    : '';
+  
+  // Format metrics
+  let metricsText = '';
+  if (report.metrics) {
+    metricsText = `\n\nMetrics:\n- Total Responses: ${report.metrics.totalResponses}\n- Unique Respondents: ${report.metrics.uniqueRespondents}`;
+    if (report.metrics.roleDistribution) {
+      metricsText += '\n- Response Distribution by Role:';
+      for (const [role, count] of Object.entries(report.metrics.roleDistribution)) {
+        metricsText += `\n  • ${role}: ${count}`;
+      }
+    }
+  }
+  
+  // Format key quotes
+  const quotesText = report.keyQuotes && report.keyQuotes.length > 0
+    ? `\n\nKey Quotes:\n${report.keyQuotes.map((quote: string, i: number) => `${i + 1}. "${quote}"`).join('\n')}`
+    : '';
+  
+  return `${greeting}
+
+Please find below the synthesized feedback report for "${formName}" from the "${teamName}" team.
+
+Generated: ${new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+${themesText}
+
+SUMMARY:
+${report.textSummary}
+${metricsText}
+${quotesText}
+
+This report synthesizes anonymous feedback from team members to provide insights and actionable recommendations.
+
+Best regards,
+${teamName} HR Team`;
+}

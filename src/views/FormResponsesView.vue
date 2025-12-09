@@ -85,11 +85,12 @@
           <div class="report-header">
             <h3>📄 Synthesized Report</h3>
             <div class="report-actions">
+              <button @click="sendReportEmail" class="btn-send-report" :disabled="sendingReport">
+                <span class="btn-icon">📧</span>
+                {{ sendingReport ? 'Sending...' : 'Send Report' }}
+              </button>
               <button @click="toggleReportMinimize" class="btn-minimize-report">
                 {{ reportMinimized ? '▼ Expand' : '▲ Minimize' }}
-              </button>
-              <button @click="closeSynthesizedReport" class="btn-close-report">
-                ✕ Close
               </button>
             </div>
           </div>
@@ -249,6 +250,7 @@ import GradientButton from '@/components/ui/GradientButton.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { useToast } from '@/composables/useToast';
+import { createReportEmailBody, createMailtoLink } from '@/utils/accessCode';
 
 const router = useRouter();
 const formsStore = useFormsStore();
@@ -266,6 +268,7 @@ const formsResponseCounts = ref<Record<string, number>>({});
 const generatingReport = ref(false);
 const synthesizedReport = ref<any | null>(null);
 const reportMinimized = ref(false);
+const sendingReport = ref(false);
 
 // Get forms from store
 const forms = computed(() => formsStore.forms.value);
@@ -389,11 +392,48 @@ const loadResponses = async () => {
       formQuestions.value = form.questions || [];
     }
 
+    // Load existing report if available
+    await loadExistingReport();
+
   } catch (err: any) {
     error.value = err.message || 'Failed to load responses';
     showToast(error.value, 'error');
   } finally {
     loading.value = false;
+  }
+};
+
+const loadExistingReport = async () => {
+  if (!selectedFormId.value) return;
+
+  try {
+    // Get current admin ID from forms store
+    const { currentAdminId } = useFormsStore();
+    if (!currentAdminId.value) return;
+
+    // Check if there's an existing report for this form
+    const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/getReportByFormTemplate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        formTemplate: selectedFormId.value,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.report) {
+        synthesizedReport.value = data.report;
+        // Start minimized if there's already a report
+        reportMinimized.value = true;
+        console.log('Loaded existing report:', data.report);
+      }
+    }
+  } catch (error) {
+    console.log('No existing report found or error loading:', error);
+    // Don't show error toast for this - it's normal if no report exists
   }
 };
 
@@ -474,13 +514,62 @@ const generateReport = async () => {
   }
 };
 
-const closeSynthesizedReport = () => {
-  synthesizedReport.value = null;
-  reportMinimized.value = false;
-};
+// Close function removed - reports now persist and can only be minimized
 
 const toggleReportMinimize = () => {
   reportMinimized.value = !reportMinimized.value;
+};
+
+const sendReportEmail = async () => {
+  if (!synthesizedReport.value || !selectedForm.value) {
+    showToast('No report available to send', 'error');
+    return;
+  }
+
+  try {
+    sendingReport.value = true;
+
+    // Get team members
+    const team = selectedTeam.value;
+    if (!team || !team.membersWithRoles || team.membersWithRoles.length === 0) {
+      showToast('No team members found to send report to', 'error');
+      return;
+    }
+
+    // Extract team member emails
+    const teamEmails = team.membersWithRoles
+      .map(member => member.email)
+      .filter(email => email && email.trim() !== '');
+
+    if (teamEmails.length === 0) {
+      showToast('No valid email addresses found for team members', 'error');
+      return;
+    }
+
+    // Create email subject
+    const emailSubject = `Feedback Report: ${selectedForm.value.name || 'Team Feedback'}`;
+
+    // Create email body
+    const emailBody = createReportEmailBody(
+      selectedForm.value.name || 'Team Feedback',
+      team.name || 'Your Team',
+      synthesizedReport.value
+    );
+
+    // Create mailto link
+    const mailtoLink = createMailtoLink(emailSubject, teamEmails, emailBody, true);
+
+    // Open email client
+    window.open(mailtoLink, '_blank');
+
+    showToast(`Email opened for ${teamEmails.length} team members. Please send from your email client.`, 'success');
+
+  } catch (error: any) {
+    console.error('Error preparing report email:', error);
+    showToast(error.message || 'Failed to prepare email. Please try again.', 'error');
+  } finally {
+    sendingReport.value = false;
+  }
 };
 
 // Watch for forms to be loaded, then auto-select first form with responses
@@ -554,32 +643,6 @@ const onFormChange = async () => {
   await loadExistingReport();
   // Reset minimized state when loading a new form
   reportMinimized.value = false;
-};
-
-const loadExistingReport = async () => {
-  if (!selectedFormId.value) return;
-
-  try {
-    const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/getReportByFormTemplate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        formTemplate: selectedFormId.value,
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.report) {
-        synthesizedReport.value = data.report;
-      }
-    }
-  } catch (err) {
-    // No existing report, which is fine
-    console.log('No existing report found');
-  }
 };
 </script>
 
@@ -846,6 +909,31 @@ const loadExistingReport = async () => {
   gap: 0.5rem;
 }
 
+.btn-send-report {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #A0CA92, #8ABD7C);
+  border: 1px solid rgba(160, 202, 146, 0.5);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-send-report:hover:not(:disabled) {
+  background: linear-gradient(135deg, #8ABD7C, #7BA86E);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-send-report:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-minimize-report {
   padding: 0.5rem 1rem;
   background: rgba(108, 222, 247, 0.1);
@@ -867,7 +955,7 @@ const loadExistingReport = async () => {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
-  color: var(--text);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
