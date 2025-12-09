@@ -382,6 +382,7 @@ const saveFormDraft = () => {
 }
 
 .page-header h1 {
+  font-family: 'Petit Formal Script', cursive;
   color: var(--title-primary);
   text-shadow: 1px 1px var(--primary);
 }
@@ -397,6 +398,7 @@ const saveFormDraft = () => {
 }
 
 .section-header {
+  font-family: 'Petit Formal Script', cursive;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -488,6 +490,7 @@ const saveFormDraft = () => {
 }
 
 .form-preview h3 {
+  font-family: 'Petit Formal Script', cursive;
   margin-bottom: 0.5rem;
 }
 

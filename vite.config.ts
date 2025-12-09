@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import { templateCompilerOptions } from '@tresjs/core'
 
 export default defineConfig({
   plugins: [vue()],
@@ -17,6 +18,7 @@ export default defineConfig({
         target: "https://six-1040-3dev-backend.onrender.com",
         changeOrigin: true,
         secure: false,
+        ...templateCompilerOptions
         // rewrite: (path) => path.replace(/^\/api/, '')
       }
     }

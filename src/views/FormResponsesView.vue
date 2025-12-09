@@ -596,6 +596,7 @@ const loadExistingReport = async () => {
 }
 
 .responses-header h1 {
+  font-family: 'Petit Formal Script', cursive;
   color: var(--title-primary);
   margin-bottom: 0.5rem;
 }
@@ -658,6 +659,7 @@ const loadExistingReport = async () => {
 }
 
 .no-forms-with-responses h3 {
+  font-family: 'Petit Formal Script', cursive;
   color: var(--title-primary);
   margin-bottom: 1rem;
 }
