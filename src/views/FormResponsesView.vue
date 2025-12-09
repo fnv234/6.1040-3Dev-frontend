@@ -159,7 +159,7 @@
                   <div class="metric-icon">📝</div>
                   <div class="metric-content">
                     <span class="metric-value">{{ Math.round(synthesizedReport.metrics.averageResponseLength) }}</span>
-                    <span class="metric-label">Avg Response Length</span>
+                    <span class="metric-label">Avg Response Length (chars)</span>
                   </div>
                 </div>
               </div>
