@@ -459,16 +459,15 @@ const deleteTeam = (teamId: string) => {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 2rem;
+  padding: 3rem;
 }
 
 .modal {
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: 75vh;
   overflow-y: auto;
 }
 

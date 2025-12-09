@@ -58,10 +58,13 @@
                   class="form-select"
                 >
                   <option value="">Select an option</option>
-                  <option value="Excellent">Excellent</option>
-                  <option value="Good">Good</option>
-                  <option value="Fair">Fair</option>
-                  <option value="Poor">Poor</option>
+                  <option
+                    v-for="(option, optIdx) in (question.options && question.options.length > 0 ? question.options : ['Excellent', 'Good', 'Fair', 'Poor'])"
+                    :key="optIdx"
+                    :value="option"
+                  >
+                    {{ option }}
+                  </option>
                 </select>
               </div>
 
