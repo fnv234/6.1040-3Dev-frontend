@@ -58,7 +58,7 @@
               class="btn-generate-report"
             >
               <span v-if="generatingReport">Generating Report...</span>
-              <span v-else>📊 {{ synthesizedReport ? 'Regenerate' : 'Generate' }} Synthesis Report</span>
+              <span v-else>📊 {{ currentFormReport ? 'Regenerate' : 'Generate' }} Synthesis Report</span>
             </GradientButton>
           </div>
           <div class="summary-stats">
@@ -80,10 +80,13 @@
           </p>
         </div>
 
-        <!-- Generated Report Display -->
-        <div v-if="synthesizedReport" class="synthesized-report-section">
+        <!-- Generated Report Display - NEW FORMATTED VERSION -->
+        <div v-if="currentFormReport" class="synthesized-report-section">
           <div class="report-header">
-            <h3>📄 Synthesized Report</h3>
+            <div class="report-title-section">
+              <h3>📄 Synthesized Report</h3>
+              <span class="report-badge">AI-Generated Analysis</span>
+            </div>
             <div class="report-actions">
               <button @click="sendReportEmail" class="btn-send-report" :disabled="sendingReport">
                 <span class="btn-icon">📧</span>
@@ -96,81 +99,129 @@
           </div>
           
           <div v-show="!reportMinimized" class="report-content">
-            <div class="report-meta">
-              <span class="report-date">📅 Generated: {{ formatDate(synthesizedReport.createdAt) }}</span>
-              <span class="report-form-name">📋 {{ selectedForm?.name }}</span>
-            </div>
-
-            <div v-if="synthesizedReport.keyThemes && synthesizedReport.keyThemes.length > 0" class="report-themes">
-              <h4>🎯 Key Themes Identified</h4>
-              <p class="section-description">The most prominent themes emerging from team feedback:</p>
-              <div class="themes-list">
-                <span v-for="(theme, index) in synthesizedReport.keyThemes" :key="theme" class="theme-tag">
-                  <span class="theme-number">{{ index + 1 }}</span>
-                  {{ theme }}
-                </span>
+            <!-- Report Meta Information -->
+            <div class="report-meta-card">
+              <div class="meta-item">
+                <span class="meta-icon">📅</span>
+                <div class="meta-content">
+                  <span class="meta-label">Generated</span>
+                  <span class="meta-value">{{ formatDate(currentFormReport.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">📋</span>
+                <div class="meta-content">
+                  <span class="meta-label">Form</span>
+                  <span class="meta-value">{{ selectedForm?.name }}</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">👥</span>
+                <div class="meta-content">
+                  <span class="meta-label">Responses</span>
+                  <span class="meta-value">{{ currentFormReport.metrics?.totalResponses || responses.length }}</span>
+                </div>
               </div>
             </div>
 
-            <div class="report-summary">
-              <h4>📊 Analysis & Insights</h4>
-              <p class="section-description">Synthesized findings from {{ synthesizedReport.metrics?.totalResponses || responses.length }} team responses:</p>
-              <div class="summary-text">
-                {{ synthesizedReport.textSummary }}
+            <!-- Key Themes Section -->
+            <div v-if="currentFormReport.keyThemes && currentFormReport.keyThemes.length > 0" class="report-card themes-card">
+              <div class="card-header">
+                <h4>🎯 Key Themes Identified</h4>
+                <p class="card-subtitle">The most prominent themes emerging from team feedback</p>
+              </div>
+              <div class="themes-grid">
+                <div v-for="(theme, index) in currentFormReport.keyThemes" :key="theme" class="theme-item">
+                  <div class="theme-number">{{ index + 1 }}</div>
+                  <div class="theme-text">{{ theme }}</div>
+                </div>
               </div>
             </div>
 
-            <div v-if="synthesizedReport.keyQuotes && synthesizedReport.keyQuotes.length > 0" class="report-quotes">
-              <h4>💬 Notable Feedback Excerpts</h4>
-              <p class="section-description">Representative quotes from team members:</p>
-              <ul class="quotes-list">
-                <li v-for="(quote, index) in synthesizedReport.keyQuotes" :key="index" class="quote-item">
-                  <span class="quote-number">{{ index + 1 }}</span>
-                  <span class="quote-text">"{{ quote }}"</span>
-                </li>
-              </ul>
+            <!-- Analysis Summary Section -->
+            <div class="report-card summary-card">
+              <div class="card-header">
+                <h4>📊 Analysis & Insights</h4>
+                <p class="card-subtitle">Synthesized findings from {{ currentFormReport.metrics?.totalResponses || responses.length }} team responses</p>
+              </div>
+              <div class="summary-text-container">
+                <MarkdownRenderer 
+                  v-if="currentFormReport.textSummary" 
+                  :content="currentFormReport.textSummary" 
+                />
+                <div v-else class="no-summary">
+                  <p>No summary available</p>
+                </div>
+              </div>
             </div>
 
-            <div v-if="synthesizedReport.metrics" class="report-metrics">
-              <h4>📈 Response Metrics</h4>
+            <!-- Key Quotes Section -->
+            <div v-if="currentFormReport.keyQuotes && currentFormReport.keyQuotes.length > 0" class="report-card quotes-card">
+              <div class="card-header">
+                <h4>💬 Notable Feedback Excerpts</h4>
+                <p class="card-subtitle">Representative quotes from team members</p>
+              </div>
+              <div class="quotes-container">
+                <div v-for="(quote, index) in currentFormReport.keyQuotes" :key="index" class="quote-item">
+                  <div class="quote-icon">"</div>
+                  <div class="quote-content">
+                    <div class="quote-text">
+                      <MarkdownRenderer :content="quote" />
+                    </div>
+                    <span class="quote-attribution">— Team Member</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metrics Section -->
+            <div v-if="currentFormReport.metrics" class="report-card metrics-card">
+              <div class="card-header">
+                <h4>📈 Response Metrics</h4>
+                <p class="card-subtitle">Statistical overview of feedback data</p>
+              </div>
               <div class="metrics-grid">
-                <div class="metric-item">
+                <div class="metric-box">
                   <div class="metric-icon">👥</div>
-                  <div class="metric-content">
-                    <span class="metric-value">{{ synthesizedReport.metrics.totalResponses }}</span>
+                  <div class="metric-data">
+                    <span class="metric-value">{{ currentFormReport.metrics.totalResponses }}</span>
                     <span class="metric-label">Total Responses</span>
                   </div>
                 </div>
-                <div class="metric-item">
+                <div class="metric-box">
                   <div class="metric-icon">🎯</div>
-                  <div class="metric-content">
-                    <span class="metric-value">{{ synthesizedReport.metrics.uniqueRespondents }}</span>
+                  <div class="metric-data">
+                    <span class="metric-value">{{ currentFormReport.metrics.uniqueRespondents }}</span>
                     <span class="metric-label">Unique Respondents</span>
                   </div>
                 </div>
-                <div class="metric-item">
+                <div class="metric-box">
                   <div class="metric-icon">❓</div>
-                  <div class="metric-content">
-                    <span class="metric-value">{{ synthesizedReport.metrics.questionsAnswered }}</span>
+                  <div class="metric-data">
+                    <span class="metric-value">{{ currentFormReport.metrics.questionsAnswered }}</span>
                     <span class="metric-label">Questions Covered</span>
                   </div>
                 </div>
-                <div v-if="synthesizedReport.metrics.averageResponseLength" class="metric-item">
+                <div v-if="currentFormReport.metrics.averageResponseLength" class="metric-box">
                   <div class="metric-icon">📝</div>
-                  <div class="metric-content">
-                    <span class="metric-value">{{ Math.round(synthesizedReport.metrics.averageResponseLength) }}</span>
-                    <span class="metric-label">Avg Response Length (chars)</span>
+                  <div class="metric-data">
+                    <span class="metric-value">{{ Math.round(currentFormReport.metrics.averageResponseLength) }}</span>
+                    <span class="metric-label">Avg Response Length (Chars)</span>
                   </div>
                 </div>
               </div>
-              <div v-if="synthesizedReport.metrics.roleDistribution" class="role-distribution">
+
+              <!-- Role Distribution -->
+              <div v-if="currentFormReport.metrics.roleDistribution" class="role-distribution-section">
                 <h5>👔 Participation by Role</h5>
-                <div class="role-dist-grid">
-                  <div v-for="(count, role) in synthesizedReport.metrics.roleDistribution" :key="role" class="role-dist-item">
-                    <span class="role-name">{{ role }}</span>
-                    <div class="role-count-bar">
-                      <div class="role-count-fill" :style="{ width: (count / synthesizedReport.metrics.totalResponses * 100) + '%' }"></div>
+                <div class="role-items">
+                  <div v-for="(count, role) in currentFormReport.metrics.roleDistribution" :key="role" class="role-item">
+                    <div class="role-info">
+                      <span class="role-name">{{ role }}</span>
                       <span class="role-count">{{ count }} response{{ count !== 1 ? 's' : '' }}</span>
+                    </div>
+                    <div class="role-bar">
+                      <div class="role-bar-fill" :style="{ width: (count / currentFormReport.metrics.totalResponses * 100) + '%' }"></div>
                     </div>
                   </div>
                 </div>
@@ -235,8 +286,7 @@
                   {{ getQuestionPrompt(questionIndex) }}
                 </div>
                 <div class="response-text">
-                <p>Response:  {{ responseText }} </p>
-                 
+                  <p>Response: {{ responseText }}</p>
                 </div>
               </div>
             </div>
@@ -262,6 +312,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import GradientButton from '@/components/ui/GradientButton.vue';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import { useFormsStore } from '@/store/forms';
 import { useTeamsStore } from '@/store/teams';
 import { useToast } from '@/composables/useToast';
@@ -281,15 +332,23 @@ const sortBy = ref('date');
 const formQuestions = ref<any[]>([]);
 const formsResponseCounts = ref<Record<string, number>>({});
 const generatingReport = ref(false);
-const synthesizedReport = ref<any | null>(null);
 const reportMinimized = ref(false);
 const sendingReport = ref(false);
+
+// Store reports per form ID
+const formReports = ref<Record<string, any>>({});
 
 // Get forms from store
 const forms = computed(() => formsStore.forms.value);
 const selectedForm = computed(() => 
   forms.value.find(f => f._id === selectedFormId.value)
 );
+
+// Get the report for the CURRENT form only
+const currentFormReport = computed(() => {
+  if (!selectedFormId.value) return null;
+  return formReports.value[selectedFormId.value] || null;
+});
 
 // Get team info for completion rate calculation
 const selectedTeam = computed(() => {
@@ -315,12 +374,10 @@ const uniqueRoles = computed(() => {
 const completionRate = computed(() => {
   if (!selectedForm.value) return 0;
   
-  // Get the actual number of team members
   const teamMemberCount = selectedTeam.value?.members?.length || 0;
   
   if (teamMemberCount === 0) return 0;
   
-  // Calculate completion rate based on actual team size
   return Math.min(100, Math.round((responses.value.length / teamMemberCount) * 100));
 });
 
@@ -331,7 +388,6 @@ const filteredResponses = computed(() => {
     filtered = filtered.filter(r => r.memberRole === roleFilter.value);
   }
 
-  // Sort responses
   filtered.sort((a, b) => {
     switch (sortBy.value) {
       case 'date':
@@ -357,14 +413,10 @@ const loadForms = async () => {
     loading.value = true;
     error.value = '';
 
-    // Forms are loaded reactively by the store; nothing else to do here for now.
-    // Load response counts for all forms to determine which have responses
     await loadFormResponseCounts();
 
     console.log('Available forms:', forms.value);
     console.log('Response counts:', formsResponseCounts.value);
-    // Auto-selection is now handled by the watcher above
-
   } catch (err: any) {
     error.value = err.message || 'Failed to load forms';
   } finally {
@@ -381,7 +433,6 @@ const loadFormResponseCounts = async () => {
         const formResponses = await formsStore.getFormResponses(form._id);
         responseCounts[form._id] = formResponses.length;
       } catch (error) {
-        // If we can't load responses for a form, assume it has 0 responses
         responseCounts[form._id] = 0;
       }
     }
@@ -397,17 +448,14 @@ const loadResponses = async () => {
     loading.value = true;
     error.value = '';
     
-    // Load responses for the selected form
     const formResponses = await formsStore.getFormResponses(selectedFormId.value);
     responses.value = formResponses;
 
-    // Load form questions to display prompts
     const form = selectedForm.value;
     if (form) {
       formQuestions.value = form.questions || [];
     }
 
-    // Load existing report if available
     await loadExistingReport();
 
   } catch (err: any) {
@@ -421,12 +469,16 @@ const loadResponses = async () => {
 const loadExistingReport = async () => {
   if (!selectedFormId.value) return;
 
+  // Check if we already have the report cached for this form
+  if (formReports.value[selectedFormId.value]) {
+    console.log('Using cached report for form:', selectedFormId.value);
+    return;
+  }
+
   try {
-    // Get current admin ID from forms store
     const { currentAdminId } = useFormsStore();
     if (!currentAdminId.value) return;
 
-    // Check if there's an existing report for this form
     const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/getReportByFormTemplate`, {
       method: 'POST',
       headers: {
@@ -440,15 +492,14 @@ const loadExistingReport = async () => {
     if (response.ok) {
       const data = await response.json();
       if (data.report) {
-        synthesizedReport.value = data.report;
-        // Start minimized if there's already a report
+        // Store the report specifically for this form ID
+        formReports.value[selectedFormId.value] = data.report;
         reportMinimized.value = true;
-        console.log('Loaded existing report:', data.report);
+        console.log('Loaded existing report for form:', selectedFormId.value);
       }
     }
   } catch (error) {
-    console.log('No existing report found or error loading:', error);
-    // Don't show error toast for this - it's normal if no report exists
+    console.log('No existing report found for form:', selectedFormId.value);
   }
 };
 
@@ -481,13 +532,11 @@ const generateReport = async () => {
     generatingReport.value = true;
     error.value = '';
 
-    // Get current admin ID from forms store
     const { currentAdminId } = useFormsStore();
     if (!currentAdminId.value) {
       throw new Error('No current admin');
     }
 
-    // Call the sync-based API that handles everything
     const response = await fetch(`${import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_BASE_URL}/ReportSynthesis/generateFormTemplateReport`, {
       method: 'POST',
       headers: {
@@ -506,18 +555,17 @@ const generateReport = async () => {
       throw new Error(errorData.error || 'Failed to generate report');
     }
 
-    // The sync returns the completed report via the respond action
     const responseData = await response.json();
-    console.log('Full backend response:', responseData); // Debug log
     const { report } = responseData;
-    console.log('Generated report:', report); // Debug log
+    
     if (!report) {
       throw new Error('No report data received from backend');
     }
-    synthesizedReport.value = report;
-    // Reset minimized state when regenerating so the report stays visible
+    
+    // Store the report for THIS specific form
+    formReports.value[selectedFormId.value] = report;
     reportMinimized.value = false;
-    console.log('Report set in ref:', synthesizedReport.value); // Debug log
+    
     showToast('Synthesis report generated successfully!', 'success');
 
   } catch (err: any) {
@@ -534,7 +582,7 @@ const toggleReportMinimize = () => {
 };
 
 const sendReportEmail = async () => {
-  if (!synthesizedReport.value || !selectedForm.value) {
+  if (!currentFormReport.value || !selectedForm.value) {
     showToast('No report available to send', 'error');
     return;
   }
@@ -542,14 +590,12 @@ const sendReportEmail = async () => {
   try {
     sendingReport.value = true;
 
-    // Get team members
     const team = selectedTeam.value;
     if (!team || !team.membersWithRoles || team.membersWithRoles.length === 0) {
       showToast('No team members found to send report to', 'error');
       return;
     }
 
-    // Extract team member emails
     const teamEmails = team.membersWithRoles
       .map(member => member.email)
       .filter(email => email && email.trim() !== '');
@@ -559,20 +605,14 @@ const sendReportEmail = async () => {
       return;
     }
 
-    // Create email subject
     const emailSubject = `Feedback Report: ${selectedForm.value.name || 'Team Feedback'}`;
-
-    // Create email body
     const emailBody = createReportEmailBody(
       selectedForm.value.name || 'Team Feedback',
       team.name || 'Your Team',
-      synthesizedReport.value
+      currentFormReport.value
     );
 
-    // Create mailto link
     const mailtoLink = createMailtoLink(emailSubject, teamEmails, emailBody, true);
-
-    // Open email client
     window.open(mailtoLink, '_blank');
 
     showToast(`Email opened for ${teamEmails.length} team members. Please send from your email client.`, 'success');
@@ -585,11 +625,9 @@ const sendReportEmail = async () => {
   }
 };
 
-// Watch for forms to be loaded, then auto-select first form with responses
 watch(() => formsStore.loaded.value, (isLoaded) => {
   if (isLoaded && forms.value.length > 0) {
     console.log('Forms are loaded, checking for responses');
-    // Load response counts if not already loaded
     if (Object.keys(formsResponseCounts.value).length === 0) {
       loadFormResponseCounts();
     } else {
@@ -598,7 +636,6 @@ watch(() => formsStore.loaded.value, (isLoaded) => {
   }
 });
 
-// Watch for response counts to be calculated
 watch(formsResponseCounts, (counts) => {
   if (Object.keys(counts).length > 0 && forms.value.length > 0) {
     console.log('Response counts calculated, checking for forms with responses');
@@ -619,42 +656,27 @@ const checkAndSelectFormWithResponses = () => {
   }
 };
 
-// Watch for changes to selectedFormId to automatically load responses
 watch(selectedFormId, async (newFormId) => {
   if (newFormId) {
     await loadResponses();
   } else {
-    // Clear data when no form is selected
     responses.value = [];
     formQuestions.value = [];
-    synthesizedReport.value = null;
+    // Don't clear formReports - keep all cached reports
     reportMinimized.value = false;
   }
 });
-
-// Watch for changes to synthesizedReport to debug disappearing issue
-watch(synthesizedReport, (newValue, oldValue) => {
-  console.log('synthesizedReport changed:', { 
-    newValue: !!newValue, 
-    oldValue: !!oldValue,
-    newValueData: newValue,
-    reportMinimized: reportMinimized.value 
-  });
-}, { deep: true });
 
 const onFormChange = async () => {
   if (!selectedFormId.value) {
     responses.value = [];
     formQuestions.value = [];
-    synthesizedReport.value = null;
     reportMinimized.value = false;
     return;
   }
 
   await loadResponses();
-  // Try to load existing report for this form
   await loadExistingReport();
-  // Reset minimized state when loading a new form
   reportMinimized.value = false;
 };
 </script>
@@ -699,7 +721,7 @@ const onFormChange = async () => {
 .form-selector label {
   display: block;
   margin-bottom: 0.5rem;
-  color:  var(--primary);
+  color: var(--primary);
   font-weight: 500;
 }
 
@@ -717,7 +739,7 @@ const onFormChange = async () => {
 
 .form-select:focus {
   outline: none;
-  border-color:  rgba(0, 0, 0, 1);
+  border-color: rgba(0, 0, 0, 1);
   box-shadow: 0 0 0 2px rgba(126, 162, 170, 0.2);
 }
 
@@ -800,6 +822,378 @@ const onFormChange = async () => {
 .stat-label {
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+/* NEW FORMATTED REPORT STYLES */
+.synthesized-report-section {
+  margin-bottom: 2rem;
+  padding: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #427AA1 0%, #7EA2AA 100%);
+  color: white;
+}
+
+.report-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.report-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.report-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-send-report {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 6px;
+  color: #427AA1;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.btn-send-report:hover:not(:disabled) {
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-send-report:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-minimize-report {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-minimize-report:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.report-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Report Cards */
+.report-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.card-header {
+  margin-bottom: 1rem;
+}
+
+.card-header h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.card-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Meta Card */
+.report-meta-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.meta-icon {
+  font-size: 1.5rem;
+}
+
+.meta-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  font-size: 0.9375rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Themes Grid */
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.theme-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #427AA1;
+  transition: all 0.2s;
+}
+
+.theme-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 122, 161, 0.2);
+}
+
+.theme-number {
+  background: linear-gradient(135deg, #427AA1, #7EA2AA);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.theme-text {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9375rem;
+}
+
+/* Summary Text */
+.summary-text-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.no-summary {
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Quotes */
+.quotes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quote-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+  transition: all 0.2s;
+}
+
+.quote-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateX(4px);
+}
+
+.quote-icon {
+  font-size: 2.5rem;
+  color: #f59e0b;
+  line-height: 1;
+  font-family: Georgia, serif;
+  opacity: 0.5;
+}
+
+.quote-content {
+  flex: 1;
+}
+
+.quote-text {
+  margin: 0 0 0.5rem 0;
+  color: #334155;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.quote-text :deep(p) {
+  margin: 0;
+  font-style: italic;
+}
+
+.quote-attribution {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* Metrics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.metric-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.metric-icon {
+  font-size: 2rem;
+}
+
+.metric-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #427AA1;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+/* Role Distribution */
+.role-distribution-section {
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.role-distribution-section h5 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.role-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.role-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.role-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.role-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.role-count {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.role-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.role-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #427AA1, #7EA2AA);
+  border-radius: 4px;
+  transition: width 0.5s ease;
 }
 
 /* Filters */
@@ -892,384 +1286,14 @@ const onFormChange = async () => {
   padding: 0.5rem 0;
 }
 
-/* Synthesized Report Section */
-.synthesized-report-section {
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, rgba(126, 162, 170, 0.1), rgba(66, 122, 161, 0.1));
-  border: 2px solid var(--primary);
-  border-radius: 12px;
-}
-
-.report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.report-header h3 {
-  font-family: 'Cal Sans', sans-serif;
-  color: var(--title-primary);
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.report-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-send-report {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #A0CA92, #8ABD7C);
-  border: 1px solid rgba(160, 202, 146, 0.5);
-  border-radius: 6px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.btn-send-report:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8ABD7C, #7BA86E);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.btn-send-report:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-minimize-report {
-  padding: 0.5rem 1rem;
-  background: rgba(108, 222, 247, 0.1);
-  border: 1px solid rgba(108, 222, 247, 0.3);
-  border-radius: 6px;
-  color: var(--primary);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.btn-minimize-report:hover {
-  background: rgba(108, 222, 247, 0.2);
-  border-color: var(--primary);
-}
-
-.report-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.report-meta {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;
-}
-
-.report-date, .report-form-name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.report-themes {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border-left: 4px solid var(--primary);
-}
-
-.report-themes h4 {
-  color: var(--title-primary);
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.section-description {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-  font-style: italic;
-}
-
-.themes-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.theme-tag {
-  padding: 0.75rem 1.25rem;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  color: white;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.theme-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.theme-number {
-  background: rgba(255, 255, 255, 0.2);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.report-summary {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border-left: 4px solid #10b981;
-}
-
-.report-summary h4 {
-  color: var(--title-primary);
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.summary-text {
-  color: var(--text);
-  line-height: 1.8;
-  white-space: pre-wrap;
-  font-size: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-}
-
-.report-quotes {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border-left: 4px solid #f59e0b;
-}
-
-.report-quotes h4 {
-  color: var(--title-primary);
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.quotes-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.quote-item {
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-left: 3px solid #f59e0b;
-  border-radius: 6px;
-  color: var(--text);
-  font-style: italic;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  transition: all 0.3s ease;
-}
-
-.quote-item:hover {
-  background: rgba(255, 255, 255, 0.12);
-  transform: translateX(4px);
-}
-
-.quote-number {
-  background: #f59e0b;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  font-style: normal;
-}
-
-.quote-text {
-  flex: 1;
-  line-height: 1.6;
-}
-
-.report-metrics {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border-left: 4px solid #8b5cf6;
-}
-
-.report-metrics h4 {
-  color: var(--title-primary);
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.metric-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.metric-item:hover {
-  background: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-}
-
-.metric-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.metric-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric-label {
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.metric-value {
-  color: var(--primary);
-  font-weight: 700;
-  font-size: 1.75rem;
-  line-height: 1;
-}
-
-.role-distribution {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.role-distribution h5 {
-  color: var(--title-primary);
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.role-dist-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.role-dist-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.role-name {
-  color: var(--text);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.role-count-bar {
-  position: relative;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  padding: 0 0.75rem;
-}
-
-.role-count-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
-  transition: width 0.5s ease;
-  opacity: 0.3;
-}
-
-.role-count {
-  position: relative;
-  z-index: 1;
-  color: var(--text);
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
 /* Empty States */
-.empty-state, .no-selection-state, .no-forms-state {
+.empty-state {
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
 }
 
-.empty-state h3, .no-selection-state h3, .no-forms-state h3 {
+.empty-state h3 {
   color: var(--title-primary);
   margin-bottom: 1rem;
 }
@@ -1301,6 +1325,35 @@ const onFormChange = async () => {
   
   .response-card {
     padding: 1rem;
+  }
+
+  .report-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .report-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-send-report,
+  .btn-minimize-report {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .themes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-meta-card {
+    grid-template-columns: 1fr;
   }
 }
 </style>
