@@ -71,6 +71,24 @@ export function createMailtoLink(
 }
 
 /**
+ * Clean date patterns from text content
+ */
+function cleanDatePatterns(content: string): string {
+  if (!content) return content;
+  
+  return content
+    .replace(/October 26, 2023/gi, '')
+    .replace(/Date:\s*October 26, 2023/gi, '')
+    .replace('Date:', '')
+    .replace(/Generated on:\s*October 26, 2023/gi, '')
+    .replace(/As of October 26, 2023/gi, '')
+    .replace(/On October 26, 2023/gi, '')
+    .replace(/^(?:Generated on|Date:|As of|On) [A-Za-z]+ \d{1,2}, \d{4}(?: at \d{1,2}:\d{2}(?: [AP]M)?)?[\n\r]+/i, '')
+    .replace(/^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}(?::\d{2})?)?[\n\r]+/, '')
+    .trim();
+}
+
+/**
  * Create email body with synthesized report
  */
 export function createReportEmailBody(
@@ -100,18 +118,20 @@ export function createReportEmailBody(
   
   // Format key quotes
   const quotesText = report.keyQuotes && report.keyQuotes.length > 0
-    ? `\n\nKey Quotes:\n${report.keyQuotes.map((quote: string, i: number) => `${i + 1}. "${quote}"`).join('\n')}`
+    ? `\n\nKey Quotes:\n${report.keyQuotes.map((quote: string, i: number) => `${i + 1}. "${cleanDatePatterns(quote)}"`).join('\n')}`
     : '';
+  
+  // Clean the summary text to remove date patterns
+  const cleanSummary = cleanDatePatterns(report.textSummary || '');
   
   return `${greeting}
 
 Please find below the synthesized feedback report for "${formName}" from the "${teamName}" team.
 
-Generated: ${new Date(report.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 ${themesText}
 
 SUMMARY:
-${report.textSummary}
+${cleanSummary}
 ${metricsText}
 ${quotesText}
 
